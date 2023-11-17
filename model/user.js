@@ -15,7 +15,11 @@ var userSchema = new mongoose.Schema(
     },
     avatar:{
       type:String,
+      default: "https://res.cloudinary.com/dbaayx6nn/image/upload/v1700220004/googleclassroom/evoah8ejteno9pwaezrg.png",
      // required:true,
+    },
+    introduce:{
+      type: String
     },
     address: {
       type: String,
