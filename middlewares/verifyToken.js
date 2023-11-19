@@ -2,6 +2,7 @@ const jwt=require('jsonwebtoken')
 const asyncHandler=require('express-async-handler')
 
 const verifyAccessToken= asyncHandler ( async(req,res,next)=>{
+
     if(req?.headers?.authorization?.startsWith('Bearer'))
     {
         const token=req.headers.authorization.split(' ')[1];
@@ -11,7 +12,6 @@ const verifyAccessToken= asyncHandler ( async(req,res,next)=>{
                 message: 'Invalid access token!'
             })
 
-            console.log(decode)
             req.user=decode
             next()
         })

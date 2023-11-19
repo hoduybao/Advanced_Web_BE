@@ -15,6 +15,13 @@ const storage = new CloudinaryStorage({
     folder: 'googleclassroom'
   }
 });
+const checkAvatarField = (req, res, next) => {
+  if (!req.file) {
+    // Nếu không có trường dữ liệu "avatar", bỏ qua việc tải lên và điều này chuyển đến hàm xử lý tiếp theo
+    return res.status(400).json({ error: 'No avatar field found in the request' });
+  }
+  next();
+};
 
 const uploadCloud = multer({ storage });
 

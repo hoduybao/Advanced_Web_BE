@@ -62,7 +62,7 @@ const login =asyncHandler(async(req,res)=>{
       userData,
     });
   } else {
-    throw new Error("Invalid credentials!");
+    throw new Error("Log in failed! Incorrect email or password.");
   }
 
 
@@ -82,18 +82,21 @@ const getCurrent = asyncHandler(async (req, res) => {
 const updateUser= asyncHandler(async(req,res)=>{
 
   const {_id}=req.user;
-
   if(!_id || Object.keys(req.body).length===0)
   throw new Error('Missing inputs')
    
-  req.body.avatar=req.file.path;
+  if(req.file)
+  {
+    req.body.avatar=req.file.path;
+  }
 
+  
  const response =await User.findByIdAndUpdate(_id,req.body,{new:true}).select('-password -refreshToken')
 
 
   return res.status(200).json({
     success:response?true:false,
-    updatedUser: response ? response :'Something went wrong'
+    userData: response ? response :'Something went wrong'
   })
 })
 
