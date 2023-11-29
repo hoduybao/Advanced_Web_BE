@@ -7,6 +7,8 @@ const asyncHandler = require('express-async-handler')
 
 router.post('/register', ctrls.register);
 router.get('/verify-email', ctrls.verifyEmail);
+router.post('/reset-password', ctrls.resetPassword);
+router.post('/forget-password', ctrls.forgetPassword);
 router.post('/login', ctrls.login);
 router.get('/current', verifyAccessToken, ctrls.getCurrent)
 router.put('/update', [verifyAccessToken], uploader.single('avatar'), ctrls.updateUser);
