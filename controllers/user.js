@@ -43,12 +43,11 @@ const register = asyncHandler(async (req, res) => {
 
   //send verification mailto user
   var mailOptions = {
-    from: process.env.AUTH_EMAIL,
+    from: `"BTH classroom"<${process.env.AUTH_EMAIL}>`,
     to: user.email,
     subject: 'Verify your email',
-    html: `<h2> ${user.fullname}! Thanks for registering on our site </h2>
-          <h4> Please verify your mail to continue...</h4>
-          <a href="http://${req.headers.host}/api/user/verify-email?token=${user.emailToken}">Verify</a>
+    html: `<h2>Hello ${user.fullname}! Thank you for registering on our website!</h2>
+          <h4>To activate your account, please <a href="http://${req.headers.host}/api/user/verify-email?token=${user.emailToken}">click here</a></h4>        
     `
   }
 
@@ -72,19 +71,88 @@ const register = asyncHandler(async (req, res) => {
 
 });
 
-const verifyEmail = async (req, res) => {
-  const token = req.query.token;
-  const user = await User.findOne({ emailToken: token })
-  if (user) {
-    user.emailToken = null;
-    user.verified = true;
-    const verify = await user.save();
-    return res.status(200).json({
-      success: verify ? true : false,
-      message: verify ? "Verify your account successfully!" : "Can not verify your account",
-    })
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.query;
+
+  const user = await User.findOne({ emailToken: token });
+
+  if (!user) {
+    // Handle the case where the user with the provided token is not found
+    return res.status(404).send(`
+      <html>
+        <head>
+          <title>Email Verification Failed</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              margin: 0;
+            }
+            .content {
+              text-align: center;
+              border: 2px solid #ccc; /* Thêm border 2px với màu xám nhạt */
+              padding: 20px; /* Thêm padding để tạo khoảng cách từ border đến nội dung */
+              border-radius: 10px; /* Thêm border-radius để bo tròn các góc */
+            }
+            h1 {
+              color: red;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="content">
+            <h1>Email verification failed</h1>
+            <p>Invalid token.</p>
+          </div>
+        </body>
+      </html>
+    `);
   }
-};
+
+  // Update user's verification status
+  user.verified = true;
+  user.emailToken = undefined; // Clear the emailToken
+
+  await user.save();
+
+  // Respond with an HTML page indicating successful verification
+  res.status(200).send(`
+  <html>
+    <head>
+      <title>Email Verification Successful</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+        }
+        .content {
+          text-align: center;
+          border: 2px solid #ccc; /* Thêm border 2px với màu xám nhạt */
+          padding: 20px; /* Thêm padding để tạo khoảng cách từ border đến nội dung */
+          border-radius: 10px; /* Thêm border-radius để bo tròn các góc */
+        }
+        h1 {
+          color: green;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="content">
+        <h1>Email Verification Successful</h1>
+        <p>Your email has been successfully verified. You can now log in to your account.</p>
+      </div>
+    </body>
+  </html>
+`);
+});
+
 
 function generateRandomPassword() {
   const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -135,7 +203,7 @@ const resetPassword = async (req, res) => {
 
 
 const forgetPassword = async (req, res) => {
-  const { email }= req.body;
+  const { email } = req.body;
 
   const user = await User.findOne({ email: email })
 
@@ -145,7 +213,7 @@ const forgetPassword = async (req, res) => {
 
     //send verification mailto user
     var mailOptions = {
-      from: process.env.AUTH_EMAIL,
+      from: `"BTH classroom"<${process.env.AUTH_EMAIL}>`,
       to: user.email,
       subject: 'Forget your password',
       html: `<h2>Hello ${user.fullname}!</h2>
