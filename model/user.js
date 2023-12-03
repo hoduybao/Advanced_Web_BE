@@ -39,6 +39,10 @@ var userSchema = new mongoose.Schema(
     },
     emailToken: {
       type: String,
+    },
+    typeLogin:{
+      type: String,
+      required: true,
     }
   },
   {
