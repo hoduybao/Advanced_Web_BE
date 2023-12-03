@@ -99,20 +99,21 @@ function generateRandomPassword() {
 }
 
 const resetPassword = async (req, res) => {
-  const { email, password, newpassword } = req.body;
+  const { _id } = req.user;
 
-  if (!email || !password || !newpassword) {
+  const { password, newpassword } = req.body;
+
+  if (!_id || !password || !newpassword) {
     return res.status(400).json({
       success: false,
       message: "Missing inputs",
     });
   }
 
-  const response = await User.findOne({ email });
+  const user = await User.findById(_id);
 
-  const user = await User.findOne({ email: email })
   if (user) {
-    if (await response.isCorrectPassword(password)) {
+    if (await user.isCorrectPassword(password)) {
       user.password = newpassword;
       const response = await user.save();
       return res.status(200).json({
@@ -125,11 +126,6 @@ const resetPassword = async (req, res) => {
         message: "Incorrect old password!",
       })
     }
-  } else {
-    return res.status(200).json({
-      success: false,
-      message: "Email is not exist!!!",
-    })
   }
 };
 
