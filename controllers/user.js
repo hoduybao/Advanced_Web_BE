@@ -285,7 +285,12 @@ const login = asyncHandler(async (req, res) => {
 const loginGoogle = asyncHandler(async (req, res) => {
  
 
-  
+  if(!req.user)
+  {
+    return res.status(401).json({
+      success: false,
+    });
+  }
   const user = await User.findOne({
     email: req.user.email.emails[0].value,
     typeLogin: "google",
@@ -348,6 +353,8 @@ const loginGoogle = asyncHandler(async (req, res) => {
       userData, 
     });
   }
+
+  
 });
 const getCurrent = asyncHandler(async (req, res) => {
   const { _id } = req.user;

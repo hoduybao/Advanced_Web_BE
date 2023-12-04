@@ -9,7 +9,7 @@ const cookieSession = require("cookie-session");
 const passport=require("passport")
 const passportSetup=require("./middlewares/passport")
 
-const initRoutes = require("./routes");
+const initRoutes = require("./routes"); 
 
 
 const app = express();
@@ -32,6 +32,7 @@ app.use(cookieSession(
     }
 ))
 app.use(passport.initialize());
+
 app.use(passport.session());
 
 //doc data kieu json
@@ -43,5 +44,5 @@ dbConnect();
 initRoutes(app);
 
 app.listen(port, () => {
-  console.log("Server running");
-});
+  console.log("Server running" +port);
+}); 
