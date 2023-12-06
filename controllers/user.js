@@ -1,5 +1,6 @@
 const User = require("../model/user");
-const nodemailer = require("nodemailer");
+const sendmail = require("../helpers/sendmail")
+const generateRandom = require("../helpers/generateRandom");
 const crypto = require("crypto");
 require("dotenv").config();
 
@@ -8,17 +9,6 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require("../middlewares/jwt");
-
-var transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.AUTH_EMAIL,
-    pass: process.env.AUTH_PASS,
-  },
-  tls: { 
-    rejectUnauthorized: false,
-  },
-});
 
 const register = asyncHandler(async (req, res) => {
   const { fullname, email, password } = req.body;
@@ -38,21 +28,11 @@ const register = asyncHandler(async (req, res) => {
       message: "Missing inputs!",
     });
 
-  //send verification mailto user
-  var mailOptions = {
-    from: `"BTH classroom"<${process.env.AUTH_EMAIL}>`,
-    to: user.email,
-    subject: "Verify your email",
-    html: `<h2>Hello ${user.fullname}! Thank you for registering on our website!</h2>
+  sendmail.sendmail(user.email,
+    "Verify your email",
+    `<h2>Hello ${user.fullname}! Thank you for registering on our website!</h2>
           <h4>To activate your account, please <a href="http://${req.headers.host}/api/user/verify-email?token=${user.emailToken}">click here</a></h4>        
-    `,
-  };
-
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-    }
-  });
+    `);
 
   const findEmail = await User.findOne({ email });
 
@@ -150,19 +130,6 @@ const verifyEmail = asyncHandler(async (req, res) => {
 `);
 });
 
-function generateRandomPassword() {
-  const characters =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let password = "";
-
-  for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    password += characters.charAt(randomIndex);
-  }
-
-  return password;
-}
-
 const resetPassword = async (req, res) => {
   const { _id } = req.user;
 
@@ -199,27 +166,19 @@ const forgetPassword = async (req, res) => {
 
   const user = await User.findOne({ email: email });
 
-  const password = generateRandomPassword();
+  const password = generateRandom.generateRandom(6);
 
   if (user) {
-    //send verification mailto user
-    var mailOptions = {
-      from: `"BTH classroom"<${process.env.AUTH_EMAIL}>`,
-      to: user.email,
-      subject: "Forget your password",
-      html: `<h2>Hello ${user.fullname}!</h2>
-          <h3>You have just requested a password reset for our website.</h3>
-          <h4>Your new password is: ${password}</h4>`,
-    };
 
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-      }
-    });
+    sendmail.sendmail(user.email,
+      "Forget your password",
+      `<h2>Hello ${user.fullname}!</h2>
+          <h3>You have just requested a password reset for our website.</h3>
+          <h4>Your new password is: ${password}</h4>`);
 
     user.password = password;
     const response = await user.save();
+
     return res.status(200).json({
       success: true,
       message: "A new password has been sent to your email!",
@@ -283,10 +242,9 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const loginGoogle = asyncHandler(async (req, res) => {
- 
 
-  if(!req.user)
-  {
+
+  if (!req.user) {
     return res.status(401).json({
       success: false,
     });
@@ -350,11 +308,11 @@ const loginGoogle = asyncHandler(async (req, res) => {
     return res.status(200).json({
       success: true,
       accessToken,
-      userData, 
+      userData,
     });
   }
 
-  
+
 });
 const getCurrent = asyncHandler(async (req, res) => {
   const { _id } = req.user;
