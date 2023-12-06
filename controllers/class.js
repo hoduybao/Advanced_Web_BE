@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+require('dotenv').config();
 const Classroom = require("../model/class");
 const User_class = require("../model/user_class");
 const User = require("../model/user");
@@ -160,10 +161,11 @@ const inviteUserByMail = async (req, res) => {
     const { email, role, slug } = req.body;
 
     const classDetails = await Classroom.findOne({ slug: slug });
+
     if (!classDetails) {
         return res.status(404).json({
             success: false,
-            message: 'Class not found'
+            message: "Class not found"
         });
     }
 
@@ -185,12 +187,12 @@ const inviteUserByMail = async (req, res) => {
         if (userClass) {
             return res.status(404).json({
                 success: false,
-                message: 'User is exist in class!'
+                message: "User is exist in class!"
             });
         } else {
             sendmail.sendmail(email,
                 "Invite to Classroom",
-                `<h2>You have just received an invitation to join the ${classDetails.title} class as a ${role}</h2>
+                `<h2>You have just received an invitation to join the class: ${classDetails.title} as a ${role}</h2>
             <h4>To participate, please <a href="http://${req.headers.host}/api/class/verify-invite?slug=${classDetails.slug}&role=${role}&token=${emailhash}">click here</a></h4>        
             `);
             new_pending_invite.save();
@@ -203,7 +205,7 @@ const inviteUserByMail = async (req, res) => {
     } else {
         sendmail.sendmail(email,
             "Invite to Classroom",
-            `<h2>You have just received an invitation to join the ${classDetails.title} class as a ${role}</h2>
+            `<h2>You have just received an invitation to join the class: ${classDetails.title} as a ${role}</h2>
             <h4>To participate, please <a href="http://${req.headers.host}/api/class/verify-invite?slug=${classDetails.slug}&role=${role}&token=${emailhash}">click here</a></h4>        
             `);
         new_pending_invite.save();
@@ -222,6 +224,40 @@ const verifyInvite = async (req, res) => {
 
     const user = await User.findOne({ email: pending_invite.email });
 
+    if (!pending_invite.isValid) {
+        return res.status(400).send(`
+        <html>
+            <head>
+                <title>Failed to join the class</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                    }
+                    .content {
+                        text-align: center;
+                        border: 2px solid #ccc;
+                        padding: 20px;
+                        border-radius: 10px;
+                    }
+                    h1 {
+                        color: red;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="content">
+                    <h1>Failed to join the class</h1>
+                    <p>You are already in the class.</p>
+                </div>
+            </body>
+        </html>`);
+    }
+
     if (user) {
         const classDetails = await Classroom.findOne({ slug: slug });
         const new_user_class = new User_class({
@@ -230,11 +266,19 @@ const verifyInvite = async (req, res) => {
             Role: role
         });
 
-        await Classroom.findByIdAndUpdate(
-            classDetails._id,
-            { $push: { studentList: user._id } },
-            { new: true }
-        );
+        if (role == "student") {
+            await Classroom.findByIdAndUpdate(
+                classDetails._id,
+                { $push: { studentList: user._id } },
+                { new: true }
+            );
+        } else {
+            await Classroom.findByIdAndUpdate(
+                classDetails._id,
+                { $push: { teacherList: user._id } },
+                { new: true }
+            );
+        }
 
         new_user_class.save();
 
@@ -244,17 +288,99 @@ const verifyInvite = async (req, res) => {
             { new: true }
         );
 
-        return res.status(200).json({
-            success: true,
-            message: 'User joined the class successfully!!!'
-        });
-    } else {
-        return res.status(400).json({
-            success: false,
-            message: 'You do not have account in Classroom!!!'
-        });
-    }
+        return res.status(200).send(`
+        <html>
+            <head>
+                <title>Join Class Successfully</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                    }
+                    .content {
+                        text-align: center;
+                        border: 2px solid #ccc;
+                        padding: 20px;
+                        border-radius: 10px;
+                    }
+                    h1 {
+                        color: green;
+                    }
+                    button {
+                        padding: 10px 20px;
+                        background-color: #4caf50;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="content">
+                    <h1>Join Class Successfully</h1>
+                    <p>You have been approved to join the class, you can start right away.</p>
+                    <button id="startButton">Start Class</button>
+                </div>
+                <script>
+                    document.getElementById("startButton").addEventListener("click", function () {
+                        window.location.href = "${process.env.CLIENT_URL}";
+                    });
+                </script>
+            </body>
+        </html>`);
 
+    } else {
+        return res.status(400).send(`
+        <html>
+            <head>
+                <title>Failed to join the class</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                    }
+                    .content {
+                        text-align: center;
+                        border: 2px solid #ccc;
+                        padding: 20px;
+                        border-radius: 10px;
+                    }
+                    h1 {
+                        color: red;
+                    }
+                    button {
+                        padding: 10px 20px;
+                        background-color: #4caf50;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="content">
+                    <h1>Failed to join the class</h1>
+                    <p>You don't have a classroom account yet. Please create an account here.</p>
+                    <button id="startButton">Register</button>
+                </div>
+                <script>
+                    document.getElementById("startButton").addEventListener("click", function () {
+                        window.location.href = "${process.env.CLIENT_URL}/auth/register";
+                    });
+                </script>
+            </body>
+        </html>`);
+    }
 }
 
 const joinClassByLink = async (req, res) => {
@@ -407,12 +533,37 @@ const getListClassRoleStudent = async (req, res) => {
     }
 };
 
+const getListClassOfUser = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const userClasses = await User_class.find({
+            userID: userId,
+        }).populate('classID');
+
+        const classes = userClasses.map((userClassroom) => {
+            return {
+                _id: userClassroom.classID._id,
+                title: userClassroom.classID.title,
+                subTitle: userClassroom.classID.subTitle,
+                role: userClassroom.Role,
+            };
+        });
+
+        res.status(200).json({ classes });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 
 
 module.exports = {
     createNewClass,
     getListClassRoleTeacher,
     getListClassRoleStudent,
+    getListClassOfUser,
     joinClassByCode,
     joinClassByLink,
     getListUserOfClass,
