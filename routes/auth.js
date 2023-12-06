@@ -22,7 +22,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    successRedirect: "https://myclassroomhcmus.netlify.app/",
+    successRedirect: "http://localhost:3000/",
     failureRedirect: "/login/failed",
   })
 );

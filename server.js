@@ -44,5 +44,5 @@ dbConnect();
 initRoutes(app);
 
 app.listen(port, () => {
-  console.log("Server running" +port);
+  console.log("Server running " +port);
 }); 
