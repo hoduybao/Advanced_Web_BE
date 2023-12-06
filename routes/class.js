@@ -9,5 +9,8 @@ router.get("/class-joining", [verifyAccessToken], ctrls.getListClassRoleStudent)
 router.get("/list-user/:slugClass", [verifyAccessToken], ctrls.getListUserOfClass);
 router.post("/join/:invitationId", [verifyAccessToken], ctrls.joinClassByCode);
 router.post("/join/class/:slugClass", [verifyAccessToken], ctrls.joinClassByLink);
+router.post("/check/:slugClass", [verifyAccessToken], ctrls.checkUserInClass);
+router.post("/invite", [verifyAccessToken], ctrls.inviteUserByMail);
+router.get("/verify-invite", ctrls.verifyInvite);
 
 module.exports = router;
