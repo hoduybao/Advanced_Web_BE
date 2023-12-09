@@ -87,7 +87,9 @@ const createNewClass = async (req, res) => {
     const userclassroom = new User_class(preUserClassroom);
     await userclassroom.save();
 
-    res.status(201).send(classroom);
+    res.status(200).json({
+        success:true,
+        data:classroom});
   } catch (error) {
     res.status(400).send({
       success: false,
@@ -143,6 +145,7 @@ const joinClassByCode = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      data: classDetails,
       message: "User joined the class successfully",
     });
   } catch (error) {
@@ -368,7 +371,7 @@ const verifyInvite = async (req, res) => {
                 </div>
                 <script>
                     document.getElementById("startButton").addEventListener("click", function () {
-                        window.location.href = "${process.env.CLIENT_URL}";
+                        window.location.href = "${process.env.CLIENT_URL_LOCALHOST}/class/${slug}";
                     });
                 </script>
             </body>
@@ -589,6 +592,7 @@ const getListClassOfUser = async (req, res) => {
     const classes = userClasses.map((userClassroom) => {
       return {
         _id: userClassroom.classID._id,
+        slug: userClassroom.classID.slug,
         title: userClassroom.classID.title,
         subTitle: userClassroom.classID.subTitle,
         role: userClassroom.Role,
