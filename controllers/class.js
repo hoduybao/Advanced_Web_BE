@@ -8,6 +8,45 @@ const generateRandom = require("../helpers/generateRandom");
 const generateSlug = require("../helpers/generateSlug");
 const sendmail = require("../helpers/sendmail");
 
+
+const getAllInfo = async (req, res) => {
+  try {
+
+    const { slugClass } = req.params;
+
+    const classInfo = await Classroom.findOne({ slug: slugClass })
+      .populate({
+        path: "studentList",
+        select: "id fullname avatar",
+      })
+      .populate({
+        path: "teacherList",
+        select: "id fullname avatar",
+      })
+      .populate({
+        path: "owner",
+        select: "id fullname avatar",
+      });
+
+    if (!classInfo) {
+      return res.status(404).json({
+        success: false,
+        message: "Class not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: classInfo,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
+}
 const createNewClass = async (req, res) => {
   //req.body (title, subTitle)
 
@@ -51,6 +90,7 @@ const createNewClass = async (req, res) => {
     res.status(201).send(classroom);
   } catch (error) {
     res.status(400).send({
+      success: false,
       message: error.message,
     });
   }
@@ -538,7 +578,13 @@ const getListClassOfUser = async (req, res) => {
 
     const userClasses = await User_class.find({
       userID: userId,
-    }).populate("classID");
+    }).populate({
+      path: "classID",
+      populate: {
+        path: "owner",
+        model: "User",
+      },
+    });
 
     const classes = userClasses.map((userClassroom) => {
       return {
@@ -546,6 +592,10 @@ const getListClassOfUser = async (req, res) => {
         title: userClassroom.classID.title,
         subTitle: userClassroom.classID.subTitle,
         role: userClassroom.Role,
+        owner: {
+          name: userClassroom.classID.owner.fullname,
+          avatar: userClassroom.classID.owner.avatar,
+        },
       };
     });
 
@@ -562,6 +612,7 @@ const getListClassOfUser = async (req, res) => {
   }
 };
 
+
 module.exports = {
   createNewClass,
   getListClassRoleTeacher,
@@ -573,4 +624,5 @@ module.exports = {
   checkUserInClass,
   inviteUserByMail,
   verifyInvite,
+  getAllInfo
 };

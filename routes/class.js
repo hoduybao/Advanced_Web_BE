@@ -2,7 +2,7 @@ const router = require("express").Router();
 const ctrls = require("../controllers/class");
 const { verifyAccessToken } = require("../middlewares/verifyToken");
 
-
+router.get("/detail/:slugClass", [verifyAccessToken], ctrls.getAllInfo);
 router.post("/create", [verifyAccessToken], ctrls.createNewClass);
 router.get("/class-teaching", [verifyAccessToken], ctrls.getListClassRoleTeacher);
 router.get("/list-class", [verifyAccessToken], ctrls.getListClassOfUser);
