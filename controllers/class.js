@@ -433,7 +433,9 @@ const joinClassByLink = async (req, res) => {
     const userId = req.user._id;
     const { slugClass } = req.params;
 
-    const classDetails = await Classroom.findOne({ slug: slugClass });
+    const { code } = req.query;
+
+    const classDetails = await Classroom.findOne({ slug: slugClass, invitationCode: code });
 
     if (!classDetails) {
       return res.status(404).json({
