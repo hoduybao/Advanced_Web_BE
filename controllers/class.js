@@ -620,6 +620,79 @@ const getListClassOfUser = async (req, res) => {
   }
 };
 
+const createGradeStructure = async (req, res) => {
+  const { slug } = req.params;
+  const gradeStructures = req.body;
+  try {
+    if (!gradeStructures || Object.keys(gradeStructures).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Require body grade structure",
+      });
+    } else {
+      const classDetails = await Classroom.findOne({ slug: slug });
+      const updatedClass = await Classroom.findByIdAndUpdate(
+        classDetails._id,
+        {
+          $push: {
+            gradeStructure: { $each: gradeStructures }
+          }
+        },
+        { new: true }
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Create Grade Structure Successfully",
+        data: updatedClass
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+}
+
+const updateGradeStructure = async (req, res) => {
+  const { slug } = req.params;
+  const gradeStructures = req.body;
+  try {
+    if (!gradeStructures || Object.keys(gradeStructures).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Require body grade structure",
+      });
+    } else {
+      const classDetails = await Classroom.findOne({ slug: slug });
+      const updatedClass = await Classroom.findByIdAndUpdate(
+        classDetails._id,
+        {
+          $set: {
+            'gradeStructure.$[element]': gradeStructures
+          }
+        },
+        {
+          arrayFilters: gradeStructures.map(gradeStructure => ({ 'element._id': gradeStructure._id })),
+          new: true
+        }
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Updated Grade Structure Successfully",
+        data: updatedClass
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+}
+
 
 module.exports = {
   createNewClass,
@@ -632,5 +705,7 @@ module.exports = {
   checkUserInClass,
   inviteUserByMail,
   verifyInvite,
-  getAllInfo
+  getAllInfo,
+  createGradeStructure,
+  updateGradeStructure
 };
