@@ -374,7 +374,7 @@ const verifyInvite = async (req, res) => {
                 </div>
                 <script>
                     document.getElementById("startButton").addEventListener("click", function () {
-                        window.location.href = "${process.env.CLIENT_URL_LOCALHOST}/class/${slug}";
+                        window.location.href = "${process.env.CLIENT_URL}/class/${slug}";
                     });
                 </script>
             </body>
