@@ -88,8 +88,9 @@ const createNewClass = async (req, res) => {
     await userclassroom.save();
 
     res.status(200).json({
-        success:true,
-        data:classroom});
+      success: true,
+      data: classroom
+    });
   } catch (error) {
     res.status(400).send({
       success: false,
@@ -470,7 +471,8 @@ const joinClassByLink = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `User joined class ${classDetails.title} successfully`,
+      message: `User joined class successfully`,
+      data: classDetails
     });
   } catch (error) {
     res.status(500).json({
