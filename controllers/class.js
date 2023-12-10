@@ -92,7 +92,7 @@ const createNewClass = async (req, res) => {
       data: classroom
     });
   } catch (error) {
-    res.status(400).send({
+    res.status(200).send({
       success: false,
       message: error.message,
     });
@@ -122,9 +122,10 @@ const joinClassByCode = async (req, res) => {
     });
 
     if (existingUserClassroom) {
-      return res.status(400).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: "User is already part of the class",
+        data: classDetails
       });
     }
 
@@ -178,12 +179,12 @@ const checkUserInClass = async (req, res) => {
     });
 
     if (existingUserClassroom) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: true,
         message: "User is already join in the class",
       });
     } else {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "User is not join in the class",
       });
@@ -198,6 +199,7 @@ const checkUserInClass = async (req, res) => {
 
 const inviteUserByMail = async (req, res) => {
   const { email, role, slug } = req.body;
+
 
   const classDetails = await Classroom.findOne({ slug: slug });
 
@@ -227,7 +229,7 @@ const inviteUserByMail = async (req, res) => {
     });
 
     if (userClass) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         message: "User is exist in class!",
       });
@@ -447,7 +449,7 @@ const joinClassByLink = async (req, res) => {
     });
 
     if (existingUserClassroom) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "User is already part of the class",
       });
