@@ -40,9 +40,12 @@ var userSchema = new mongoose.Schema(
     emailToken: {
       type: String,
     },
-    typeLogin:{
+    typeLogin: {
       type: String,
       required: true,
+    },
+    IDStudent: {
+      type: String,
     }
   },
   {

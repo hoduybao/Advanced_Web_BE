@@ -620,78 +620,112 @@ const getListClassOfUser = async (req, res) => {
   }
 };
 
-const createGradeStructure = async (req, res) => {
+const createOrUpdateGradeStructure = async (req, res) => {
   const { slug } = req.params;
   const gradeStructures = req.body;
   try {
-    if (!gradeStructures || Object.keys(gradeStructures).length === 0) {
+    if (!gradeStructures || gradeStructures.length === 0) {
       return res.status(400).json({
         success: false,
         message: "Require body grade structure",
       });
     } else {
       const classDetails = await Classroom.findOne({ slug: slug });
-      const updatedClass = await Classroom.findByIdAndUpdate(
-        classDetails._id,
-        {
-          $push: {
-            gradeStructure: { $each: gradeStructures }
-          }
-        },
-        { new: true }
-      );
-      return res.status(200).json({
-        success: true,
-        message: "Create Grade Structure Successfully",
-        data: updatedClass
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(400).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-}
 
-const updateGradeStructure = async (req, res) => {
-  const { slug } = req.params;
-  const gradeStructures = req.body;
-  try {
-    if (!gradeStructures || Object.keys(gradeStructures).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Require body grade structure",
+      // Fetch the existing grade structure
+      const existingGradeStructure = classDetails.gradeStructure || [];
+
+      // Update existing grades
+      gradeStructures.forEach(newGrade => {
+        const existingGradeIndex = existingGradeStructure.findIndex(
+          grade => grade._id && grade._id.toString() === newGrade._id.toString()
+        );
+
+        if (existingGradeIndex !== -1) {
+          // Update existing grade if it exists
+          existingGradeStructure[existingGradeIndex].title = newGrade.title;
+          existingGradeStructure[existingGradeIndex].grade = newGrade.grade;
+        }
       });
-    } else {
-      const classDetails = await Classroom.findOne({ slug: slug });
+
+
+
+      // Remove grades not present in the updated list
+      const updatedGradeIds = gradeStructures.map(grade => grade._id.toString());
+      classDetails.gradeStructure = existingGradeStructure.filter(existingGrade => {
+        return updatedGradeIds.includes(existingGrade._id.toString());
+      });
+
+      // Add new grades
+      const newGrades = gradeStructures.filter(newGrade => !newGrade._id);
+      classDetails.gradeStructure.push(...newGrades);
+
+      // Update the class with the modified grade structure
       const updatedClass = await Classroom.findByIdAndUpdate(
         classDetails._id,
         {
           $set: {
-            'gradeStructure.$[element]': gradeStructures
-          }
+            gradeStructure: classDetails.gradeStructure,
+          },
         },
-        {
-          arrayFilters: gradeStructures.map(gradeStructure => ({ 'element._id': gradeStructure._id })),
-          new: true
-        }
+        { new: true }
       );
+
       return res.status(200).json({
         success: true,
-        message: "Updated Grade Structure Successfully",
-        data: updatedClass
+        message: "Create or Update Grade Structure Successfully",
+        data: updatedClass,
       });
     }
   } catch (error) {
     console.error(error);
-    return res.status(400).json({
+    return res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
-}
+};
+
+const FinalizedGradeStructure = async (req, res) => {
+  try {
+    const { slugClass, gradeID } = req.params;
+
+    const classroom = await Classroom.findOne({ slug: slugClass });
+
+    if (!classroom) {
+      return res.status(404).json({
+        success: false,
+        message: 'Classroom not found'
+      });
+    }
+
+    const composition = classroom.gradeStructure.find(comp => comp._id.toString() === gradeID);
+
+    if (!composition) {
+      return res.status(400).json({
+        success: false,
+        message: 'Grade composition not found'
+      });
+    }
+
+    composition.isFinalized = true;
+
+    await classroom.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Grade composition marked as finalized'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error'
+    });
+  }
+};
+
+
 
 
 module.exports = {
@@ -706,6 +740,6 @@ module.exports = {
   inviteUserByMail,
   verifyInvite,
   getAllInfo,
-  createGradeStructure,
-  updateGradeStructure
+  createOrUpdateGradeStructure,
+  FinalizedGradeStructure
 };

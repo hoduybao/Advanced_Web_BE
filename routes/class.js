@@ -14,7 +14,7 @@ router.post("/check/:slugClass", [verifyAccessToken], ctrls.checkUserInClass);
 router.post("/invite", [verifyAccessToken], ctrls.inviteUserByMail);
 router.get("/verify-invite", ctrls.verifyInvite);
 
-router.post("/gradeStructure/:slug", [verifyAccessToken], ctrls.createGradeStructure);
-router.put("/gradeStructure/update/:slug", [verifyAccessToken], ctrls.updateGradeStructure);
+router.post("/gradeStructure/:slug", [verifyAccessToken], ctrls.createOrUpdateGradeStructure);
+router.put("/finalize-grade/:slugClass/:gradeID", [verifyAccessToken], ctrls.FinalizedGradeStructure);
 
 module.exports = router;
