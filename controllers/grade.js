@@ -379,10 +379,8 @@ const getAllPointInClass = async (slug) => {
         // Tính điểm trung bình và cập nhật vào kết quả trả về
         const result = Array.from(groupedGrades.values()).map(item => {
             const totalPoints = item.grades.reduce((total, grade) => total + (grade.point !== null ? grade.point : 0) * (grade.percentage / 100), 0);
-            const totalPercentage = classroom.gradeStructure.reduce((total, grade) => total + grade.grade, 0);
-            const cappedTotalPercentage = Math.min(totalPercentage, 100);
 
-            const averagePoint = totalPoints / cappedTotalPercentage * 100;
+            const averagePoint = parseFloat(totalPoints.toFixed(2));
 
             const cappedAveragePoint = Math.min(averagePoint, 10);
 
@@ -518,10 +516,8 @@ const getAllClassroomGrades = async (req, res) => {
         // Tính điểm trung bình và cập nhật vào kết quả trả về
         const result = Array.from(groupedGrades.values()).map(item => {
             const totalPoints = item.grades.reduce((total, grade) => total + (grade.point !== null ? grade.point : 0) * (grade.percentage / 100), 0);
-            const totalPercentage = classroom.gradeStructure.reduce((total, grade) => total + grade.grade, 0);
-            const cappedTotalPercentage = Math.min(totalPercentage, 100);
 
-            const averagePoint = totalPoints / cappedTotalPercentage * 100;
+            const averagePoint = parseFloat(totalPoints.toFixed(2));
 
             const cappedAveragePoint = Math.min(averagePoint, 10);
 
