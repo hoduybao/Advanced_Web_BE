@@ -334,21 +334,47 @@ const getAllPointInClass = async (slug) => {
         // Thêm các cột điểm chưa có điểm vào mảng grades với point = null
         classroom.gradeStructure.forEach(grade => {
             const gradeId = grade._id.toString();
-            groupedGrades.forEach(student => {
-                // Kiểm tra xem cột điểm đã tồn tại trong mảng grades của sinh viên hay chưa
-                const existingGradeIndex = student.grades.findIndex(gradeDetail => gradeDetail.idGradeStructure.toString() === gradeId);
+            if (groupedGrades.size != 0) {
+                groupedGrades.forEach(student => {
+                    // Kiểm tra xem cột điểm đã tồn tại trong mảng grades của sinh viên hay chưa
+                    const existingGradeIndex = student.grades.findIndex(gradeDetail => gradeDetail.idGradeStructure.toString() === gradeId);
 
-                if (existingGradeIndex === -1) {
-                    student.grades.push({
-                        idGradeStructure: gradeId,
-                        columnName: grade.title,
-                        percentage: grade.grade,
-                        isFinalized: false,
-                        point: null,
-                    });
-                }
-            });
+                    if (existingGradeIndex === -1) {
+                        student.grades.push({
+                            idGradeStructure: gradeId,
+                            columnName: grade.title,
+                            percentage: grade.grade,
+                            isFinalized: false,
+                            point: null,
+                        });
+                    }
+                });
+            } else {
+                // Thêm sinh viên chưa có điểm vào danh sách kết quả với điểm là null
+                classroom.studentList.forEach(student => {
+                    const studentId = student._id.toString();
+                    if (!groupedGrades.has(studentId)) {
+                        groupedGrades.set(studentId, {
+                            dataStudent: {
+                                _id: studentId,
+                                IDStudent: student.IDStudent,
+                                fullname: student.fullname,
+                            },
+                            grades: classroom.gradeStructure.map(grade => ({
+                                idGradeStructure: grade._id,
+                                columnName: grade.title,
+                                percentage: grade.grade,
+                                isFinalized: false,
+                                point: null,
+                            })),
+                        });
+                    }
+                });
+            }
+
         });
+
+
 
         // Tính điểm trung bình và cập nhật vào kết quả trả về
         const result = Array.from(groupedGrades.values()).map(item => {
@@ -373,6 +399,7 @@ const getAllPointInClass = async (slug) => {
             gradeStructure: classroom.gradeStructure,
             studentGrades: result,
         };
+
     } catch (error) {
         console.error(error);
         return;
@@ -446,21 +473,47 @@ const getAllClassroomGrades = async (req, res) => {
         // Thêm các cột điểm chưa có điểm vào mảng grades với point = null
         classroom.gradeStructure.forEach(grade => {
             const gradeId = grade._id.toString();
-            groupedGrades.forEach(student => {
-                // Kiểm tra xem cột điểm đã tồn tại trong mảng grades của sinh viên hay chưa
-                const existingGradeIndex = student.grades.findIndex(gradeDetail => gradeDetail.idGradeStructure.toString() === gradeId);
+            if (groupedGrades.size != 0) {
+                groupedGrades.forEach(student => {
+                    // Kiểm tra xem cột điểm đã tồn tại trong mảng grades của sinh viên hay chưa
+                    const existingGradeIndex = student.grades.findIndex(gradeDetail => gradeDetail.idGradeStructure.toString() === gradeId);
 
-                if (existingGradeIndex === -1) {
-                    student.grades.push({
-                        idGradeStructure: gradeId,
-                        columnName: grade.title,
-                        percentage: grade.grade,
-                        isFinalized: false,
-                        point: null,
-                    });
-                }
-            });
+                    if (existingGradeIndex === -1) {
+                        student.grades.push({
+                            idGradeStructure: gradeId,
+                            columnName: grade.title,
+                            percentage: grade.grade,
+                            isFinalized: false,
+                            point: null,
+                        });
+                    }
+                });
+            } else {
+                // Thêm sinh viên chưa có điểm vào danh sách kết quả với điểm là null
+                classroom.studentList.forEach(student => {
+                    const studentId = student._id.toString();
+                    if (!groupedGrades.has(studentId)) {
+                        groupedGrades.set(studentId, {
+                            dataStudent: {
+                                _id: studentId,
+                                IDStudent: student.IDStudent,
+                                fullname: student.fullname,
+                            },
+                            grades: classroom.gradeStructure.map(grade => ({
+                                idGradeStructure: grade._id,
+                                columnName: grade.title,
+                                percentage: grade.grade,
+                                isFinalized: false,
+                                point: null,
+                            })),
+                        });
+                    }
+                });
+            }
+
         });
+
+
 
         // Tính điểm trung bình và cập nhật vào kết quả trả về
         const result = Array.from(groupedGrades.values()).map(item => {
@@ -496,8 +549,6 @@ const getAllClassroomGrades = async (req, res) => {
         });
     }
 };
-
-
 
 
 
