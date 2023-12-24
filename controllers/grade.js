@@ -255,8 +255,9 @@ const UploadGradeAGradeStructure = async (req, res) => {
                 }
             })
         );
+        const newdata = await getAllPointInClass(slugClass);
 
-        res.status(200).json({ message: 'Grades uploaded successfully', data: updatedGrades });
+        res.status(200).json({ message: 'Grades uploaded successfully', data: newdata });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal Server Error' });
