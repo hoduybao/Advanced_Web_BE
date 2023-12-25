@@ -7,6 +7,7 @@ const Pending_Invite = require("../model/pending_invite");
 const generateRandom = require("../helpers/generateRandom");
 const generateSlug = require("../helpers/generateSlug");
 const sendmail = require("../helpers/sendmail");
+const GradeDetail = require("../model/grade_detail");
 
 
 const getAllInfo = async (req, res) => {
@@ -625,6 +626,7 @@ const getListClassOfUser = async (req, res) => {
 const createOrUpdateGradeStructure = async (req, res) => {
   const { slug } = req.params;
   const gradeStructures = req.body;
+
   try {
     if (!gradeStructures || gradeStructures.length === 0) {
       return res.status(400).json({
@@ -637,25 +639,14 @@ const createOrUpdateGradeStructure = async (req, res) => {
       // Fetch the existing grade structure
       const existingGradeStructure = classDetails.gradeStructure || [];
 
-      // Update existing grades
-      gradeStructures.forEach(newGrade => {
-        const existingGradeIndex = existingGradeStructure.findIndex(
-          grade => grade._id && grade._id.toString() === newGrade._id.toString()
-        );
-
-        if (existingGradeIndex !== -1) {
-          // Update existing grade if it exists
-          existingGradeStructure[existingGradeIndex].title = newGrade.title;
-          existingGradeStructure[existingGradeIndex].grade = newGrade.grade;
-        }
-      });
-
-
+      // Identify the grade structures to be removed
+      const removedGradeIds = existingGradeStructure
+        .filter(grade => !gradeStructures.some(newGrade => newGrade._id && newGrade._id.toString() === grade._id.toString()))
+        .map(grade => grade._id.toString());
 
       // Remove grades not present in the updated list
-      const updatedGradeIds = gradeStructures.map(grade => grade._id.toString());
       classDetails.gradeStructure = existingGradeStructure.filter(existingGrade => {
-        return updatedGradeIds.includes(existingGrade._id.toString());
+        return gradeStructures.some(newGrade => newGrade._id && newGrade._id.toString() === existingGrade._id.toString());
       });
 
       // Add new grades
@@ -673,6 +664,12 @@ const createOrUpdateGradeStructure = async (req, res) => {
         { new: true }
       );
 
+      // Remove corresponding GradeDetail records for removed grade structures
+      await GradeDetail.deleteMany({
+        classroomId: classDetails._id,
+        gradeId: { $in: removedGradeIds },
+      });
+
       return res.status(200).json({
         success: true,
         message: "Create or Update Grade Structure Successfully",
@@ -687,6 +684,7 @@ const createOrUpdateGradeStructure = async (req, res) => {
     });
   }
 };
+
 
 const FinalizedGradeStructure = async (req, res) => {
   try {

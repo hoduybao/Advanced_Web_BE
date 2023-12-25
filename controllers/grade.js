@@ -4,6 +4,90 @@ const Classroom = require("../model/class");
 const json2csv = require('json2csv');
 const User = require("../model/user");
 const GradeDetail = require("../model/grade_detail");
+const csvParser = require('csv-parser');
+
+
+const handleCsvUpload = async (slug, csvBuffer) => {
+    try {
+        const csvData = csvBuffer.toString('utf-8');
+        const rows = [];
+
+        await new Promise((resolve, reject) => {
+            require('stream')
+                .Readable.from(csvData)
+                .pipe(csvParser())
+                .on('data', (row) => {
+                    // Lấy giá trị từ cột theo vị trí
+                    const studentId = row[0];
+                    const name = row[1];
+
+                    rows.push({ studentId, name });
+                })
+                .on('end', resolve)
+                .on('error', reject);
+        });
+
+        const updatedStudentList = [];
+
+        for (const row of rows) {
+            const studentId = row.studentId;
+            const name = row.name;
+
+            let student = await User.findOne({ IDStudent: studentId });
+
+            if (!student) {
+                student = new User({
+                    IDStudent: studentId,
+                    fullname: name,
+                });
+                await student.save();
+            }
+
+            updatedStudentList.push(student._id);
+        }
+
+        const classroom = await Classroom.findOne({ slug });
+        //   classroom.studentList = updatedStudentList;
+        //   await classroom.save();
+
+        const gradeStructure = classroom.gradeStructure;
+        const studentList = classroom.studentList;
+
+        const result = studentList.map(student => {
+            return {
+                dataStudent: {
+                    _id: student._id,
+                    IDStudent: student.IDStudent,
+                    fullname: student.fullname,
+                },
+                grades: gradeStructure.map(grade => {
+                    return {
+                        idGradeStructure: grade._id,
+                        columnName: grade.title,
+                        percentage: grade.grade,
+                        isFinalized: false,
+                        point: null,
+                    };
+                }),
+            };
+        });
+
+        return {
+            success: true,
+            data: {
+                gradeStructure: gradeStructure,
+                studentGrades: result,
+            },
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            success: false,
+            message: 'Internal Server Error',
+        };
+    }
+};
+
 
 const DownloadStudentWithIdAndName = async (req, res) => {
     try {
