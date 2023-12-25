@@ -740,42 +740,38 @@ const GetGradeAStudent = async (req, res) => {
             studentId: userId,
         });
 
-        if (!studentGrades || studentGrades.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No finalized grades found for the student'
-            });
-        }
-
         const totalPoints = studentGrades.reduce((total, grade) => {
             const gradeStructure = getClassGradeById(grade.gradeId, classroom.gradeStructure);
-            if (gradeStructure.isFinalized) {
-                return total + grade.point * gradeStructure.grade / 100;
+            if (gradeStructure && gradeStructure.isFinalized) {
+                return total + (grade.point || 0) * (gradeStructure.grade / 100);
             } else {
-                return total + 0 * gradeStructure.grade / 100;
+                return total;
             }
         }, 0);
 
         const formattedGrades = await Promise.all(
-            studentGrades.map(async gradeDetail => {
-                const gradeInfo = getClassGradeById(gradeDetail.gradeId, classroom.gradeStructure);
+            classroom.gradeStructure.map(async gradeStructure => {
+                const gradeDetail = studentGrades.find(grade => grade.gradeId.toString() === gradeStructure._id.toString());
 
-                if (gradeInfo !== null) {
-                    const { _id, title, grade, isFinalized } = gradeInfo;
+                if (gradeDetail) {
                     return {
-                        _id: _id,
-                        columnName: title,
-                        percentage: grade,
-                        isFinalized: isFinalized,
+                        _id: gradeStructure._id,
+                        columnName: gradeStructure.title,
+                        percentage: gradeStructure.grade,
+                        isFinalized: gradeStructure.isFinalized,
                         point: gradeDetail.point,
                     };
+                } else {
+                    return {
+                        _id: gradeStructure._id,
+                        columnName: gradeStructure.title,
+                        percentage: gradeStructure.grade,
+                        isFinalized: gradeStructure.isFinalized,
+                        point: null,
+                    };
                 }
-
-                return null;
             })
         );
-
-        const finalFormattedGrades = formattedGrades.filter(Boolean);
 
         // Get student information
         const studentInfo = await User.findById(userId, 'fullname IDStudent');
@@ -787,11 +783,10 @@ const GetGradeAStudent = async (req, res) => {
                 studentGrades: [
                     {
                         dataStudent: studentInfo,
-                        grades: finalFormattedGrades,
+                        grades: formattedGrades,
                         averagePoint: totalPoints
                     }
                 ],
-
             },
         });
     } catch (error) {
@@ -802,6 +797,7 @@ const GetGradeAStudent = async (req, res) => {
         });
     }
 };
+
 
 
 
