@@ -639,7 +639,7 @@ const UpdateGradesFull = async (req, res) => {
 
         // Duyệt qua danh sách điểm cần cập nhật
         for (const gradeData of grades) {
-            const { idStudent, idGradeStructure, point } = gradeData;
+            const { idStudent, grades: studentGrades } = gradeData;
 
             // Kiểm tra xem sinh viên có trong lớp học không
             const isStudentInClass = classroom.studentList.includes(idStudent);
@@ -651,39 +651,44 @@ const UpdateGradesFull = async (req, res) => {
                 });
             }
 
-            // Kiểm tra xem gradestructure có trong lớp học không
-            const isGradeStructureInClass = classroom.gradeStructure.some(
-                grade => grade._id.toString() === idGradeStructure
-            );
+            // Duyệt qua điểm của sinh viên
+            for (const studentGrade of studentGrades) {
+                const { idGradeStructure, point } = studentGrade;
 
-            if (!isGradeStructureInClass) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Grade structure not found in the class'
-                });
-            }
+                // Kiểm tra xem gradestructure có trong lớp học không
+                const isGradeStructureInClass = classroom.gradeStructure.some(
+                    grade => grade._id.toString() === idGradeStructure
+                );
 
-            // Kiểm tra xem điểm đã tồn tại chưa
-            let gradeDetail = await GradeDetail.findOne({
-                classroomId: classroom._id,
-                studentId: idStudent,
-                gradeId: idGradeStructure,
-            });
+                if (!isGradeStructureInClass) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Grade structure not found in the class'
+                    });
+                }
 
-            if (!gradeDetail) {
-                // Nếu chưa có điểm, tạo mới
-                gradeDetail = new GradeDetail({
+                // Kiểm tra xem điểm đã tồn tại chưa
+                let gradeDetail = await GradeDetail.findOne({
                     classroomId: classroom._id,
                     studentId: idStudent,
                     gradeId: idGradeStructure,
-                    point: point,
                 });
 
-                await gradeDetail.save();
-            } else {
-                // Nếu đã có điểm, cập nhật
-                gradeDetail.point = point;
-                await gradeDetail.save();
+                if (!gradeDetail) {
+                    // Nếu chưa có điểm, tạo mới
+                    gradeDetail = new GradeDetail({
+                        classroomId: classroom._id,
+                        studentId: idStudent,
+                        gradeId: idGradeStructure,
+                        point: point,
+                    });
+
+                    await gradeDetail.save();
+                } else {
+                    // Nếu đã có điểm, cập nhật
+                    gradeDetail.point = point;
+                    await gradeDetail.save();
+                }
             }
         }
 
@@ -742,46 +747,51 @@ const GetGradeAStudent = async (req, res) => {
             });
         }
 
-
-
         const totalPoints = studentGrades.reduce((total, grade) => {
             const gradeStructure = getClassGradeById(grade.gradeId, classroom.gradeStructure);
             if (gradeStructure.isFinalized) {
-                return total + grade.point * gradeStructure.grade / 100
+                return total + grade.point * gradeStructure.grade / 100;
             } else {
-                return total + 0 * gradeStructure.grade / 100
+                return total + 0 * gradeStructure.grade / 100;
             }
         }, 0);
 
-
         const formattedGrades = await Promise.all(
-            studentGrades
-                .map(async gradeDetail => {
-                    const gradeInfo = getClassGradeById(gradeDetail.gradeId, classroom.gradeStructure);
+            studentGrades.map(async gradeDetail => {
+                const gradeInfo = getClassGradeById(gradeDetail.gradeId, classroom.gradeStructure);
 
-                    if (gradeInfo !== null) {
-                        const { _id, title, grade, isFinalized } = gradeInfo;
-                        return {
-                            _id: _id,
-                            columnName: title,
-                            percentage: grade,
-                            isFinalized: isFinalized,
-                            numericalGrade: gradeDetail.point,
-                        };
-                    }
+                if (gradeInfo !== null) {
+                    const { _id, title, grade, isFinalized } = gradeInfo;
+                    return {
+                        _id: _id,
+                        columnName: title,
+                        percentage: grade,
+                        isFinalized: isFinalized,
+                        point: gradeDetail.point,
+                    };
+                }
 
-                    return null;
-                })
+                return null;
+            })
         );
 
         const finalFormattedGrades = formattedGrades.filter(Boolean);
+
+        // Get student information
+        const studentInfo = await User.findById(userId, 'fullname IDStudent');
 
         res.status(200).json({
             success: true,
             data: {
                 gradeStructure: classroom.gradeStructure,
-                grades: finalFormattedGrades,
-                averagePoint: totalPoints,
+                studentGrades: [
+                    {
+                        dataStudent: studentInfo,
+                        grades: finalFormattedGrades,
+                        averagePoint: totalPoints
+                    }
+                ],
+
             },
         });
     } catch (error) {
@@ -792,6 +802,7 @@ const GetGradeAStudent = async (req, res) => {
         });
     }
 };
+
 
 
 
