@@ -21,13 +21,25 @@ const gradeReviewSchema = new mongoose.Schema(
         studentExplanation: {
             type: String,
         },
-        teacherComment: {
-            type: String,
-        },
         isFinalDecision: {
             type: Boolean,
             default: false,
         },
+        comments: [
+            {
+                author: {
+                    type: mongoose.Types.ObjectId
+                },
+                content: {
+                    type: String,
+                    required: true,
+                },
+                timestamp: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
     },
     {
         timestamps: true,

@@ -118,10 +118,23 @@ const ViewGradeReviews = async (req, res) => {
                     _id: gradeDetail.studentId._id,
                     IDStudent: gradeDetail.studentId.IDStudent,
                     fullname: gradeDetail.studentId.fullname,
-                    // Include other User information here
                 },
-                // Include other GradeDetail information here
+                point: gradeDetail.point,
             };
+
+            // Populate comments with author details
+            const populatedComments = await Promise.all(review.comments.map(async comment => {
+                const authorDetails = await User.findById(comment.author);
+                return {
+                    ...comment.toObject(),
+                    authorDetails: {
+                        _id: authorDetails._id,
+                        fullname: authorDetails.fullname,
+                        // Include other details you want to return
+                    },
+                };
+            }));
+
             // Customize the structure based on your requirements
             return {
                 _id: review._id,
@@ -133,6 +146,7 @@ const ViewGradeReviews = async (req, res) => {
                 isFinalDecision: review.isFinalDecision,
                 createdAt: review.createdAt,
                 updatedAt: review.updatedAt,
+                comments: populatedComments,
             };
         }));
 
@@ -149,7 +163,318 @@ const ViewGradeReviews = async (req, res) => {
     }
 };
 
+const ReturnGradeReviewDetails = async (reviewId) => {
+    try {
+
+        // Find the grade review based on the provided reviewId
+        const review = await GradeReview.findById(reviewId);
+
+        if (!review) {
+            return;
+        }
+
+        // Find the corresponding grade detail
+        const gradeDetail = await GradeDetail.findById(review.gradeDetail)
+            .populate({
+                path: 'studentId',
+            });
+
+        const classroom = await Classroom.findOne({ _id: review.classID });
+
+        if (!classroom) {
+            return;
+        }
+
+        const dataGradeStructure = getClassGradeById(gradeDetail.gradeId._id, classroom.gradeStructure);
+
+        // Include other GradeDetail information here
+        const formattedGradeDetail = {
+            _id: gradeDetail._id,
+            gradeId: {
+                _id: gradeDetail.gradeId._id,
+                title: dataGradeStructure.title,
+                percent: dataGradeStructure.grade,
+            },
+            studentId: {
+                _id: gradeDetail.studentId._id,
+                IDStudent: gradeDetail.studentId.IDStudent,
+                fullname: gradeDetail.studentId.fullname,
+            },
+            point: gradeDetail.point,
+        };
+
+        // Populate comments with author details
+        const populatedComments = await Promise.all(review.comments.map(async comment => {
+            const authorDetails = await User.findById(comment.author);
+            return {
+                ...comment.toObject(),
+                authorDetails: {
+                    _id: authorDetails._id,
+                    fullname: authorDetails.fullname,
+                    // Include other details you want to return
+                },
+            };
+        }));
+
+        // Customize the structure based on your requirements
+        const formattedReview = {
+            _id: review._id,
+            classID: review.classID,
+            gradeDetail: formattedGradeDetail,
+            expectedPoint: review.expectedPoint,
+            studentExplanation: review.studentExplanation,
+            oldPoint: review.oldPoint,
+            isFinalDecision: review.isFinalDecision,
+            createdAt: review.createdAt,
+            updatedAt: review.updatedAt,
+            comments: populatedComments,
+        };
+
+        return formattedReview;
+    } catch (error) {
+        console.error(error);
+        return;
+    }
+};
+
+
+const ViewGradeReviewDetails = async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+
+        // Find the grade review based on the provided reviewId
+        const review = await GradeReview.findById(reviewId);
+
+        if (!review) {
+            return res.status(400).json({
+                success: false,
+                message: 'Grade review not found',
+            });
+        }
+
+        // Find the corresponding grade detail
+        const gradeDetail = await GradeDetail.findById(review.gradeDetail)
+            .populate({
+                path: 'studentId',
+            });
+
+        const classroom = await Classroom.findOne({ _id: review.classID });
+
+        if (!classroom) {
+            return res.status(400).json({
+                success: false,
+                message: 'Classroom not found',
+            });
+        }
+
+        const dataGradeStructure = getClassGradeById(gradeDetail.gradeId._id, classroom.gradeStructure);
+
+        // Include other GradeDetail information here
+        const formattedGradeDetail = {
+            _id: gradeDetail._id,
+            gradeId: {
+                _id: gradeDetail.gradeId._id,
+                title: dataGradeStructure.title,
+                percent: dataGradeStructure.grade,
+            },
+            studentId: {
+                _id: gradeDetail.studentId._id,
+                IDStudent: gradeDetail.studentId.IDStudent,
+                fullname: gradeDetail.studentId.fullname,
+            },
+            point: gradeDetail.point,
+        };
+
+        // Populate comments with author details
+        const populatedComments = await Promise.all(review.comments.map(async comment => {
+            const authorDetails = await User.findById(comment.author);
+            return {
+                ...comment.toObject(),
+                authorDetails: {
+                    _id: authorDetails._id,
+                    fullname: authorDetails.fullname,
+                    // Include other details you want to return
+                },
+            };
+        }));
+
+        // Customize the structure based on your requirements
+        const formattedReview = {
+            _id: review._id,
+            classID: review.classID,
+            gradeDetail: formattedGradeDetail,
+            expectedPoint: review.expectedPoint,
+            studentExplanation: review.studentExplanation,
+            oldPoint: review.oldPoint,
+            isFinalDecision: review.isFinalDecision,
+            createdAt: review.createdAt,
+            updatedAt: review.updatedAt,
+            comments: populatedComments,
+        };
+
+        res.status(200).json({
+            success: true,
+            data: formattedReview,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+        });
+    }
+};
+
+const MarkFinalDecision = async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+        const { newPoint } = req.body;
+
+        // Find the grade review based on the provided reviewId
+        const review = await GradeReview.findById(reviewId);
+
+        if (!review) {
+            return res.status(400).json({
+                success: false,
+                message: 'Grade review not found',
+            });
+        }
+
+        // Update the final decision and new grade point
+        review.isFinalDecision = true;
+
+        // Save the updated review
+        await review.save();
+
+        // Optionally, you may want to update the corresponding GradeDetail as well
+        const gradeDetail = await GradeDetail.findById(review.gradeDetail);
+
+        if (gradeDetail) {
+            gradeDetail.point = newPoint;
+            await gradeDetail.save();
+        }
+
+        // Find the corresponding grade detail
+        const gradeDetailToGetData = await GradeDetail.findById(review.gradeDetail)
+            .populate({
+                path: 'studentId',
+            });
+
+        const classroom = await Classroom.findOne({ _id: review.classID });
+
+        if (!classroom) {
+            return res.status(400).json({
+                success: false,
+                message: 'Classroom not found',
+            });
+        }
+
+        const dataGradeStructure = getClassGradeById(gradeDetailToGetData.gradeId._id, classroom.gradeStructure);
+
+        // Include other GradeDetail information here
+        const formattedGradeDetail = {
+            _id: gradeDetailToGetData._id,
+            gradeId: {
+                _id: gradeDetailToGetData.gradeId._id,
+                title: dataGradeStructure.title,
+                percent: dataGradeStructure.grade,
+            },
+            studentId: {
+                _id: gradeDetailToGetData.studentId._id,
+                IDStudent: gradeDetailToGetData.studentId.IDStudent,
+                fullname: gradeDetailToGetData.studentId.fullname,
+            },
+            point: gradeDetailToGetData.point,
+        };
+
+        // Populate comments with author details
+        const populatedComments = await Promise.all(review.comments.map(async comment => {
+            const authorDetails = await User.findById(comment.author);
+            return {
+                ...comment.toObject(),
+                authorDetails: {
+                    _id: authorDetails._id,
+                    fullname: authorDetails.fullname,
+                    // Include other details you want to return
+                },
+            };
+        }));
+
+        // Customize the structure based on your requirements
+        const formattedReview = {
+            _id: review._id,
+            classID: review.classID,
+            gradeDetail: formattedGradeDetail,
+            expectedPoint: review.expectedPoint,
+            studentExplanation: review.studentExplanation,
+            oldPoint: review.oldPoint,
+            isFinalDecision: review.isFinalDecision,
+            createdAt: review.createdAt,
+            updatedAt: review.updatedAt,
+            comments: populatedComments,
+        };
+
+
+        res.status(200).json({
+            success: true,
+            message: 'Final decision marked successfully',
+            data: formattedReview,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+        });
+    }
+};
+
+
+const AddCommentToReview = async (req, res) => {
+    try {
+        const author = req.user._id;
+        const { reviewId, content } = req.body;
+
+        // Find the grade review based on the provided reviewId
+        const review = await GradeReview.findById(reviewId);
+
+        if (!review) {
+            return res.status(400).json({
+                success: false,
+                message: 'Grade review not found',
+            });
+        }
+
+        // Add the new comment to the comments array
+        review.comments.push({
+            author,
+            content,
+        });
+
+        // Save the updated review
+        await review.save();
+
+
+
+        res.status(200).json({
+            success: true,
+            message: 'Comment added successfully',
+            data: await ReturnGradeReviewDetails(reviewId),
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+        });
+    }
+};
+
+
 module.exports = {
     PostGradeReviewFromStudent,
-    ViewGradeReviews
+    ViewGradeReviews,
+    ViewGradeReviewDetails,
+    MarkFinalDecision,
+    AddCommentToReview
 };
