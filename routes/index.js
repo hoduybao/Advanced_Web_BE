@@ -4,6 +4,7 @@ const classRouter = require('./class');
 const gradeRouter = require('./grade');
 const gradeReviewRouter = require('./grade_review');
 const notificationRouter = require('./notification');
+const adminRouter = require('./admin');
 const { notFound, errHandler } = require('../middlewares/errHandler')
 
 const initRoutes = (app) => {
@@ -13,6 +14,7 @@ const initRoutes = (app) => {
     app.use('/api/grade', gradeRouter);
     app.use('/api/grade-review', gradeReviewRouter);
     app.use('/api/notification', notificationRouter);
+    app.use('/api/admin', adminRouter);
     app.use(notFound);
     app.use(errHandler);
 
