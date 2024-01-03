@@ -2,6 +2,7 @@ const crypto = require("crypto");
 require("dotenv").config();
 const Classroom = require("../model/class");
 const User_class = require("../model/user_class");
+const Notification = require("../model/notification");
 const User = require("../model/user");
 const Pending_Invite = require("../model/pending_invite");
 const generateRandom = require("../helpers/generateRandom");
@@ -711,6 +712,24 @@ const FinalizedGradeStructure = async (req, res) => {
     composition.isFinalized = true;
 
     await classroom.save();
+
+    // Get all students in the classroom
+    const students = await User.find({ _id: { $in: classroom.studentList } });
+
+    // Create a notification for each student
+    const notifications = students.map(student => {
+      return new Notification({
+        senderId: req.user._id,  // ID của người thực hiện thao tác (giáo viên)
+        receiverId: student._id,
+        objectId: composition._id,
+        objectName: 'Grade Composition',
+        message: `The grade composition for ${composition.title} in class ${classroom.title} has been finalized.`,
+        url: `${process.env.CLIENT}/${classroom.slug}`  // Điều hướng URL tới trang phù hợp
+      });
+    });
+
+    // Save all notifications
+    await Notification.insertMany(notifications);
 
     res.status(200).json({
       success: true,

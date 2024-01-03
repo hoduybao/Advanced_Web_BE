@@ -5,7 +5,7 @@ const Classroom = require("../model/class");
 const json2csv = require('json2csv');
 const User = require("../model/user");
 const GradeDetail = require("../model/grade_detail");
-const csvParser = require('csv-parser');
+const Notification = require("../model/notification");
 const GradeReview = require("../model/grade_review");
 
 const PostGradeReviewFromStudent = async (req, res) => {
@@ -53,6 +53,30 @@ const PostGradeReviewFromStudent = async (req, res) => {
             await GradeDetail.findByIdAndUpdate(existingGradeDetail._id, {
                 $set: { hasReviewed: true },
             });
+        }
+
+        // Send notification to all teachers in the class
+        const classTeachers = await Classroom.findById(existingGradeDetail.classroomId, 'teacherList');
+
+        const cls = await Classroom.findById(existingGradeDetail.classroomId);
+
+        const gradeStructureDetail = await getClassGradeById(_idgradestructure, cls.gradeStructure);
+
+        if (classTeachers) {
+            const teacherIds = classTeachers.teacherList.map(teacher => teacher.toString());
+
+            // Create a notification for each teacher
+            const notifications = teacherIds.map(teacherId => ({
+                senderId: _idstudent,
+                receiverId: teacherId,
+                objectId: newGradeReview._id,
+                objectName: 'Grade Review',
+                message: `Student ${student.fullname} has submitted a grade review in score colunm ${gradeStructureDetail.title}`,
+                url: `${process.env.CLIENT}/${cls.slug}`,  // Adjust the URL as needed
+            }));
+
+            // Insert notifications into the Notification collection
+            await Notification.insertMany(notifications);
         }
 
         res.status(200).json({
@@ -415,6 +439,25 @@ const MarkFinalDecision = async (req, res) => {
         };
 
 
+        const cls = await Classroom.findById(review.classID);
+
+
+        // Send notification to the student
+        const student = await User.findById(gradeDetailToGetData.studentId);
+        if (student) {
+            const notification = new Notification({
+                senderId: req.user._id,  // ID của người thực hiện thao tác (giáo viên)
+                receiverId: student._id,
+                objectId: review._id,
+                objectName: 'Grade Review',
+                message: `Your grade review for ${dataGradeStructure.title} in class ${cls.title} has been finalized. Check the updated grade.`,
+                url: `${process.env.CLIENT}/${cls.slug}`,  // Adjust the URL as needed
+            });
+
+            await notification.save();
+        }
+
+
         res.status(200).json({
             success: true,
             message: 'Final decision marked successfully',
@@ -435,8 +478,15 @@ const AddCommentToReview = async (req, res) => {
         const author = req.user._id;
         const { reviewId, content } = req.body;
 
-        // Find the grade review based on the provided reviewId
-        const review = await GradeReview.findById(reviewId);
+        const review = await GradeReview.findById(reviewId)
+            .populate({
+                path: 'gradeDetail',
+                populate: {
+                    path: 'studentId',
+                    model: 'User', // hoặc tên model của người dùng
+                    select: 'IDStudent fullname'
+                },
+            });
 
         if (!review) {
             return res.status(400).json({
@@ -446,14 +496,48 @@ const AddCommentToReview = async (req, res) => {
         }
 
         // Add the new comment to the comments array
-        review.comments.push({
+        const newComment = {
             author,
             content,
-        });
+        };
+        review.comments.push(newComment);
 
         // Save the updated review
         await review.save();
 
+
+        const cls = await Classroom.findById(review.classID);
+
+        const isTeacher = cls.teacherList.includes(author);
+
+        const dataGradeStructure = getClassGradeById(review.gradeDetail.gradeId, cls.gradeStructure);
+
+        if (isTeacher) {
+            const notification = new Notification({
+                senderId: author,
+                receiverId: review.gradeDetail.studentId._id,
+                objectId: reviewId,
+                objectName: 'Grade Review',
+                message: `The teacher has commented on your grade review for ${dataGradeStructure.title} in class ${cls.title}`,
+                url: `${process.env.CLIENT}/${cls.slug}`,
+            });
+
+            await notification.save();
+        } else {
+            // Gửi thông báo đến toàn bộ giáo viên trong lớp
+            const teacherNotifications = cls.teacherList.map(teacherId => {
+                return new Notification({
+                    senderId: author,
+                    receiverId: teacherId,
+                    objectId: reviewId,
+                    objectName: 'Grade Review',
+                    message: `Student ${review.gradeDetail.studentId.fullname} has commented in grade review for ${dataGradeStructure.title} in class ${cls.title}`,
+                    url: `${process.env.CLIENT}/${cls.slug}`,
+                });
+            });
+
+            await Notification.insertMany(teacherNotifications);
+        }
 
 
         res.status(200).json({

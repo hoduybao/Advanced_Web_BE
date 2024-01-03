@@ -377,6 +377,8 @@ const getAllPointInClass = async (slug) => {
         // Tạo một đối tượng Map để gom nhóm theo sinh viên
         const groupedGrades = new Map();
 
+        const addedStudents = new Set();
+
         // Duyệt qua mảng studentGrades và gom nhóm theo sinh viên
         studentGrades.forEach(gradeDetail => {
             if (gradeDetail.gradeId !== null) {
@@ -393,6 +395,8 @@ const getAllPointInClass = async (slug) => {
                             fullname: fullname,
                             grades: [],
                         });
+
+                        addedStudents.add(studentId._id.toString());
                     }
 
                     // Kiểm tra xem cột điểm đã tồn tại trong mảng grades của sinh viên hay chưa
@@ -460,6 +464,28 @@ const getAllPointInClass = async (slug) => {
         });
 
 
+        // Thêm sinh viên chưa có điểm vào danh sách kết quả với điểm là null
+        classroom.studentList.forEach(student => {
+            const studentId = student._id.toString();
+            if (!addedStudents.has(studentId)) {
+                groupedGrades.set(studentId, {
+                    dataStudent: {
+                        _id: studentId,
+                        IDStudent: student.IDStudent,
+                        fullname: student.fullname,
+                    },
+                    grades: classroom.gradeStructure.map(grade => ({
+                        idGradeStructure: grade._id,
+                        columnName: grade.title,
+                        percentage: grade.grade,
+                        isFinalized: false,
+                        point: null,
+                    })),
+                });
+            }
+        });
+
+
 
         // Tính điểm trung bình và cập nhật vào kết quả trả về
         const result = Array.from(groupedGrades.values()).map(item => {
@@ -482,7 +508,6 @@ const getAllPointInClass = async (slug) => {
             gradeStructure: classroom.gradeStructure,
             studentGrades: result,
         };
-
     } catch (error) {
         console.error(error);
         return;
