@@ -4,6 +4,7 @@ const Classroom = require("../model/class");
 const json2csv = require('json2csv');
 const User = require("../model/user");
 const GradeDetail = require("../model/grade_detail");
+const GradeReview = require("../model/grade_review");
 const csvParser = require('csv-parser');
 
 
@@ -864,12 +865,19 @@ const GetGradeAStudent = async (req, res) => {
                 const gradeDetail = studentGrades.find(grade => grade.gradeId.toString() === gradeStructure._id.toString());
 
                 if (gradeDetail) {
+                    // Tìm IDReview tương ứng với cột điểm
+                    const reviewId = await GradeReview.findOne({
+                        classID: classroom._id,
+                        gradeDetail: gradeDetail._id,
+                    }).select('_id');
+
                     return {
                         _id: gradeStructure._id,
                         columnName: gradeStructure.title,
                         percentage: gradeStructure.grade,
                         isFinalized: gradeStructure.isFinalized,
                         point: gradeDetail.point,
+                        IDReview: reviewId ? reviewId._id.toString() : null
                     };
                 } else {
                     return {
@@ -878,6 +886,7 @@ const GetGradeAStudent = async (req, res) => {
                         percentage: gradeStructure.grade,
                         isFinalized: gradeStructure.isFinalized,
                         point: null,
+                        IDReview: null,
                     };
                 }
             })
@@ -907,6 +916,7 @@ const GetGradeAStudent = async (req, res) => {
         });
     }
 };
+
 
 
 
