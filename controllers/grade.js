@@ -928,7 +928,7 @@ const GetGradeAStudent = async (req, res) => {
                     {
                         dataStudent: studentInfo,
                         grades: formattedGrades,
-                        averagePoint: totalPoints
+                        averagePoint: parseFloat(totalPoints.toFixed(2))
                     }
                 ],
             },

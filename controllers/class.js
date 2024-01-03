@@ -659,7 +659,7 @@ const createOrUpdateGradeStructure = async (req, res) => {
         classDetails._id,
         {
           $set: {
-            gradeStructure: classDetails.gradeStructure,
+            gradeStructure: gradeStructures,
           },
         },
         { new: true }
