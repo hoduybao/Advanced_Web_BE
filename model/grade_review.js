@@ -5,7 +5,7 @@ const gradeReviewSchema = new mongoose.Schema(
         gradeDetail: {
             type: mongoose.Types.ObjectId,
             required: true,
-            ref: 'GradeDetail',
+            ref: 'Grade_detail',
         },
         classID: {
             type: mongoose.Types.ObjectId,

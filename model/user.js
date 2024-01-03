@@ -46,6 +46,10 @@ var userSchema = new mongoose.Schema(
     },
     IDStudent: {
       type: String,
+    },
+    isLocked: {
+      type: Boolean,
+      default: false,
     }
   },
   {

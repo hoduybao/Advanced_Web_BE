@@ -204,6 +204,12 @@ const login = asyncHandler(async (req, res) => {
   const response = await User.findOne({ email });
 
   if (response) {
+    if (response.isLocked) {
+      return res.status(400).json({
+        success: false,
+        message: "Account is locked",
+      });
+    }
     if (response.verified) {
       if (await response.isCorrectPassword(password)) {
         const { password, refreshToken, ...userData } = response.toObject();
