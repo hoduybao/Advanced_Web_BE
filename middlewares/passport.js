@@ -1,6 +1,6 @@
 var GoogleStrategy = require("passport-google-oauth20").Strategy;
 //const LocalStrategy = require("passport-local").Strategy;
-const passport=require("passport")
+const passport = require("passport")
 
 passport.use(
   new GoogleStrategy(
@@ -9,11 +9,11 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "/api/auth/google/callback",
     },
-    function (accessToken, refreshToken, profile,email, done) {
-      done(null,{
-        profile:profile,
-        email:email 
-      } );
+    function (accessToken, refreshToken, profile, email, done) {
+      done(null, {
+        profile: profile,
+        email: email
+      });
     }
   )
 );

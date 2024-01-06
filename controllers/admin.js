@@ -10,16 +10,35 @@ const generateSlug = require("../helpers/generateSlug");
 const sendmail = require("../helpers/sendmail");
 const GradeDetail = require("../model/grade_detail");
 
+const checkIsAdmin = async (_id) => {
+    try {
+        const users = await User.findOne({ email: 'admin' });
+        if (users._id.toString() === _id) return true;
+        return false;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
 const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({ email: { $ne: 'admin' } });
-        res.status(200).json({
-            success: true,
-            data: users,
-        });
+        if (await checkIsAdmin(req.user._id)) {
+            res.status(200).json({
+                success: true,
+                data: users,
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: 'Access denied. You do not have permission to perform this action.',
+            });
+        }
+
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
@@ -31,13 +50,20 @@ const getDetailUser = async (req, res) => {
     try {
         const { userId } = req.params;
         const user = await User.findById(userId);
-        res.status(200).json({
-            success: true,
-            data: user,
-        });
+        if (await checkIsAdmin(req.user._id)) {
+            res.status(200).json({
+                success: true,
+                data: user,
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: 'Access denied. You do not have permission to perform this action.',
+            });
+        }
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
@@ -49,21 +75,28 @@ const toggleAccountStatus = async (req, res) => {
     try {
         const { userId } = req.params;
         const user = await User.findById(userId);
+        if (await checkIsAdmin(req.user._id)) {
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found',
+                });
+            }
 
-        if (!user) {
-            return res.status(404).json({
+            user.isLocked = !user.isLocked;
+            await user.save();
+
+            res.status(200).json({
+                success: true,
+                message: `Account ${user.email} is ${user.isLocked ? 'locked' : 'unlocked'}`,
+            });
+        } else {
+            return res.status(400).json({
                 success: false,
-                message: 'User not found',
+                message: 'Access denied. You do not have permission to perform this action.',
             });
         }
 
-        user.isLocked = !user.isLocked;
-        await user.save();
-
-        res.status(200).json({
-            success: true,
-            message: `Account ${user.email} is ${user.isLocked ? 'locked' : 'unlocked'}`,
-        });
 
     } catch (error) {
         console.error(error);
@@ -120,10 +153,17 @@ const UpdateUsersDetails = async (req, res) => {
 const getAllClasses = async (req, res) => {
     try {
         const classes = await Classroom.find();
-        res.status(200).json({
-            success: true,
-            data: classes,
-        });
+        if (await checkIsAdmin(req.user._id)) {
+            res.status(200).json({
+                success: true,
+                data: classes,
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: 'Access denied. You do not have permission to perform this action.',
+            });
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json({
@@ -134,11 +174,37 @@ const getAllClasses = async (req, res) => {
 };
 
 
+const getDetailClass = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        console.log(classId)
+        const classes = await Classroom.findById(classId);
+        if (await checkIsAdmin(req.user._id)) {
+            res.status(200).json({
+                success: true,
+                data: classes,
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: 'Access denied. You do not have permission to perform this action.',
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+        });
+    }
+};
+
 
 module.exports = {
     getAllUsers,
     getDetailUser,
     toggleAccountStatus,
     UpdateUsersDetails,
-    getAllClasses
+    getAllClasses,
+    getDetailClass
 }
