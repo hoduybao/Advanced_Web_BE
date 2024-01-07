@@ -105,6 +105,7 @@ const toggleAccountStatus = async (req, res) => {
             res.status(200).json({
                 success: true,
                 message: `Account ${user.email} is ${user.isLocked ? 'locked' : 'unlocked'}`,
+                data: user
             });
         } else {
             return res.status(400).json({
@@ -243,6 +244,7 @@ const toggleClassStatus = async (req, res) => {
             res.status(200).json({
                 success: true,
                 message: `Class ${classes.title} is ${classes.isActived ? 'actived' : 'inactived'}`,
+                data: classes
             });
         } else {
             return res.status(400).json({
