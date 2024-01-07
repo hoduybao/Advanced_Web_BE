@@ -31,9 +31,15 @@ const getAllInfo = async (req, res) => {
       });
 
     if (!classInfo) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
         message: "Class not found",
+      });
+    }
+    if (!classInfo.isActived) {
+      return res.status(400).json({
+        success: false,
+        message: "Class is not actived. Please contact to admin!",
       });
     }
 
@@ -43,7 +49,7 @@ const getAllInfo = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    res.status(4000).json({
       success: false,
       error: "Internal Server Error",
     });
@@ -488,30 +494,6 @@ const joinClassByLink = async (req, res) => {
   }
 };
 
-const getListClassRoleTeacher = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const userClasses = await User_class.find({
-      userID: userId,
-      Role: "teacher",
-    }).populate("classID");
-
-    const classes = userClasses.map((userClassroom) => {
-      return {
-        _id: userClassroom.classID._id,
-        title: userClassroom.classID.title,
-        subTitle: userClassroom.classID.subTitle,
-        role: userClassroom.Role,
-      };
-    });
-
-    res.status(200).json({ classes });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
 
 const getListUserOfClass = async (req, res) => {
   try {
@@ -557,32 +539,6 @@ const getListUserOfClass = async (req, res) => {
     });
   }
 };
-
-const getListClassRoleStudent = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const userClasses = await User_class.find({
-      userID: userId,
-      Role: "student",
-    }).populate("classID");
-
-    const classes = userClasses.map((userClassroom) => {
-      return {
-        _id: userClassroom.classID._id,
-        title: userClassroom.classID.title,
-        subTitle: userClassroom.classID.subTitle,
-        role: userClassroom.Role,
-      };
-    });
-
-    res.status(200).json({ classes });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
 const getListClassOfUser = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -749,8 +705,6 @@ const FinalizedGradeStructure = async (req, res) => {
 
 module.exports = {
   createNewClass,
-  getListClassRoleTeacher,
-  getListClassRoleStudent,
   getListClassOfUser,
   joinClassByCode,
   joinClassByLink,

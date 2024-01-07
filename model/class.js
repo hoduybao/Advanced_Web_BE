@@ -45,6 +45,10 @@ var classSchema = new mongoose.Schema(
             ref: 'User',
             required: true,
         },
+        isActived: {
+            type: Boolean,
+            default: true,
+        }
     },
     {
         timestamps: true,
