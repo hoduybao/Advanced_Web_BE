@@ -159,7 +159,7 @@ const joinClassByCode = async (req, res) => {
       message: "User joined the class successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -198,7 +198,7 @@ const checkUserInClass = async (req, res) => {
       });
     }
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -487,7 +487,7 @@ const joinClassByLink = async (req, res) => {
       data: classDetails
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -533,7 +533,7 @@ const getListUserOfClass = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -573,7 +573,7 @@ const getListClassOfUser = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       error: "Internal Server Error",
     });
@@ -646,7 +646,7 @@ const createOrUpdateGradeStructure = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+    return res.status(400).json({
       success: false,
       message: "Server error",
     });
@@ -706,7 +706,7 @@ const FinalizedGradeStructure = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: 'Internal Server Error'
     });
