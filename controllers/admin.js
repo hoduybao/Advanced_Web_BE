@@ -20,7 +20,6 @@ const getAllUsers = async (req, res) => {
         const { pageSize, pageNumber } = req.query;
 
         const totalUsers = await User.countDocuments({ email: { $ne: 'admin' } });
-        const totalPages = Math.ceil(totalUsers / pageSize);
 
         const users = await User.find({ email: { $ne: 'admin' } })
             .skip((pageNumber - 1) * pageSize)
@@ -37,7 +36,7 @@ const getAllUsers = async (req, res) => {
                 success: true,
                 data: adjustedUsers,
                 data: {
-                    totalPages,
+                    totalUsers,
                     currentPage: Number(pageNumber),
                     Userdata: adjustedUsers
 
@@ -173,7 +172,6 @@ const getAllClasses = async (req, res) => {
         }
 
         const totalClasses = await Classroom.countDocuments(query);
-        const totalPages = Math.ceil(totalClasses / pageSize);
         const classes = await Classroom.find(query)
             .skip((pageNumber - 1) * pageSize)
             .limit(Number(pageSize));
@@ -182,7 +180,7 @@ const getAllClasses = async (req, res) => {
             res.status(200).json({
                 success: true,
                 data: {
-                    totalPages,
+                    totalClasses,
                     currentPage: Number(pageNumber),
                     classes
                 },
