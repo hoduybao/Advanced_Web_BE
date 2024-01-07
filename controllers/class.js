@@ -601,21 +601,32 @@ const createOrUpdateGradeStructure = async (req, res) => {
         .filter(grade => !gradeStructures.some(newGrade => newGrade._id && newGrade._id.toString() === grade._id.toString()))
         .map(grade => grade._id.toString());
 
-      // Remove grades not present in the updated list
-      classDetails.gradeStructure = existingGradeStructure.filter(existingGrade => {
-        return gradeStructures.some(newGrade => newGrade._id && newGrade._id.toString() === existingGrade._id.toString());
-      });
+
+      const validGradeStructures = gradeStructures.filter(item => item._id !== "");
+
+      const updatedClass = await Classroom.findOneAndUpdate(
+        { _id: classDetails._id },
+        {
+          $set: {
+            gradeStructure: validGradeStructures,
+          },
+        },
+        { new: true }
+      );
+
+      await updatedClass.save();
+
+      const classDetailReturn = await Classroom.findOne({ slug: slug });
 
       // Add new grades
       const newGrades = gradeStructures.filter(newGrade => !newGrade._id || !existingGradeStructure.some(existingGrade => existingGrade._id.toString() === newGrade._id.toString()));
-      classDetails.gradeStructure.push(...newGrades);
+      classDetailReturn.gradeStructure.push(...newGrades);
 
-      // Update the class with the modified grade structure
-      const updatedClass = await Classroom.findOneAndUpdate(
-        classDetails._id,
+      const updated = await Classroom.findOneAndUpdate(
+        { _id: classDetailReturn._id },
         {
           $set: {
-            gradeStructure: classDetails.gradeStructure,
+            gradeStructure: classDetailReturn.gradeStructure,
           },
         },
         { new: true }
@@ -630,7 +641,7 @@ const createOrUpdateGradeStructure = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Create or Update Grade Structure Successfully",
-        data: updatedClass,
+        data: updated,
       });
     }
   } catch (error) {
