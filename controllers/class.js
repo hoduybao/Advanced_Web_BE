@@ -581,10 +581,10 @@ const getListClassOfUser = async (req, res) => {
 };
 
 const createOrUpdateGradeStructure = async (req, res) => {
-  const { slug } = req.params;
-  const gradeStructures = req.body;
-
   try {
+    const { slug } = req.params;
+    const gradeStructures = req.body;
+
     if (!gradeStructures || gradeStructures.length === 0) {
       return res.status(400).json({
         success: false,
@@ -607,15 +607,15 @@ const createOrUpdateGradeStructure = async (req, res) => {
       });
 
       // Add new grades
-      const newGrades = gradeStructures.filter(newGrade => !newGrade._id);
+      const newGrades = gradeStructures.filter(newGrade => !newGrade._id || !existingGradeStructure.some(existingGrade => existingGrade._id.toString() === newGrade._id.toString()));
       classDetails.gradeStructure.push(...newGrades);
 
       // Update the class with the modified grade structure
-      const updatedClass = await Classroom.findByIdAndUpdate(
+      const updatedClass = await Classroom.findOneAndUpdate(
         classDetails._id,
         {
           $set: {
-            gradeStructure: gradeStructures,
+            gradeStructure: classDetails.gradeStructure,
           },
         },
         { new: true }
@@ -641,6 +641,8 @@ const createOrUpdateGradeStructure = async (req, res) => {
     });
   }
 };
+
+
 
 
 const FinalizedGradeStructure = async (req, res) => {
