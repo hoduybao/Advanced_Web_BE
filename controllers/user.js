@@ -3,6 +3,10 @@ const sendmail = require("../helpers/sendmail")
 const generateRandom = require("../helpers/generateRandom");
 const crypto = require("crypto");
 require("dotenv").config();
+const passport = require('passport');
+const initializePassport = require('../middlewares/passport'); // Điều chỉnh đường dẫn đến file passport-config.js của bạn
+initializePassport(passport);
+
 
 const asyncHandler = require("express-async-handler");
 const {
@@ -191,40 +195,38 @@ const forgetPassword = async (req, res) => {
   }
 };
 
-const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+const login = asyncHandler(async (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
 
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing inputs",
-    });
-  }
-
-  const response = await User.findOne({ email });
-
-  if (response) {
-    if (response.isLocked) {
+    if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Account is locked",
+        message: info.message || 'Authentication failed',
       });
     }
-    if (response.verified) {
-      if (await response.isCorrectPassword(password)) {
-        const { password, refreshToken, ...userData } = response.toObject();
-        const accessToken = generateAccessToken(response._id);
-        const newRefreshToken = generateRefreshToken(response._id);
 
-        //Lưu refresh token vào db
-        await User.findByIdAndUpdate(
-          response._id,
+    req.login(user, async (err) => {
+      if (err) {
+        return next(err);
+      }
+
+      const { password, refreshToken, ...userData } = user.toObject();
+      const accessToken = generateAccessToken(user._id);
+      const newRefreshToken = generateRefreshToken(user._id);
+
+      // Lưu refresh token vào db
+      try {
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
           { refreshToken: newRefreshToken },
           { new: true }
         );
 
-        //Lưu refresh token vào cookie
-        res.cookie("refreshToken", newRefreshToken, {
+        // Lưu refresh token vào cookie
+        res.cookie('refreshToken', newRefreshToken, {
           httpOnly: true,
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
@@ -234,22 +236,15 @@ const login = asyncHandler(async (req, res) => {
           accessToken,
           userData,
         });
-      } else {
-        throw new Error("Log in failed! Incorrect password.");
+      } catch (err) {
+        return next(err);
       }
-    } else {
-      throw new Error(
-        "Log in failed! Your account is not activated, please verify account!"
-      );
-    }
-  } else {
-    throw new Error("Log in failed! Email not existed!");
-  }
+    });
+  })(req, res, next);
 });
 
+
 const loginGoogle = asyncHandler(async (req, res) => {
-
-
   if (!req.user) {
     return res.status(401).json({
       success: false,
