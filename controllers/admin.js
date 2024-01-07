@@ -17,15 +17,28 @@ const checkIsAdmin = async (_id) => {
 
 const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find({ email: { $ne: 'admin' } });
+        const { pageSize, pageNumber } = req.query;
+
+        const users = await User.find({ email: { $ne: 'admin' } })
+            .skip((pageNumber - 1) * pageSize)
+            .limit(parseInt(pageSize));
+
+        // Kiểm tra và điều chỉnh dữ liệu trả về
+        const adjustedUsers = users.map(user => ({
+            ...user.toObject(),
+            IDStudent: user.IDStudent || null,
+        }));
+
         if (await checkIsAdmin(req.user._id)) {
             res.status(200).json({
                 success: true,
-                data: users,
+                pageNumber: pageNumber,
+                data: adjustedUsers,
             });
         } else {
             return res.status(400).json({
                 success: false,
+
                 message: 'Access denied. You do not have permission to perform this action.',
             });
         }
@@ -38,6 +51,8 @@ const getAllUsers = async (req, res) => {
         });
     }
 };
+
+
 
 
 const getDetailUser = async (req, res) => {
@@ -103,37 +118,32 @@ const toggleAccountStatus = async (req, res) => {
 
 const UpdateUsersDetails = async (req, res) => {
     try {
-        const usersData = req.body; // Đầu vào là mảng dữ liệu người dùng cần cập nhật
+        const userData = req.body; // Đầu vào là đối tượng người dùng cần cập nhật
 
-        // Tạo một mảng chứa kết quả sau khi cập nhật cho từng người dùng
-        const updatedUsers = [];
+        const { userId, studentId } = userData;
 
-        // Duyệt qua từng người dùng trong mảng
-        for (const userData of usersData) {
-            const { userId, studentId } = userData;
+        const user = await User.findById(userId);
 
-            // Tìm người dùng dựa trên userId
-            const user = await User.findById(userId);
-
-            if (user) {
-                // Cập nhật thông tin người dùng nếu có
-                if (studentId !== undefined) {
-                    user.IDStudent = studentId;
-                }
-
-                // Lưu lại người dùng đã được cập nhật
-                const updatedUser = await user.save();
-                updatedUsers.push(updatedUser);
+        if (user) {
+            // Cập nhật thông tin người dùng nếu có
+            if (studentId !== undefined) {
+                user.IDStudent = studentId;
             }
+
+            // Lưu lại người dùng đã được cập nhật
+            const updatedUser = await user.save();
+
+            res.status(200).json({
+                success: true,
+                message: 'User details updated successfully',
+                data: updatedUser,
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                message: 'User not found',
+            });
         }
-
-        const users = await User.find({ email: { $ne: 'admin' } });
-
-        res.status(200).json({
-            success: true,
-            message: 'Users details updated successfully',
-            data: users,
-        });
     } catch (error) {
         console.error(error);
         res.status(400).json({
@@ -146,11 +156,29 @@ const UpdateUsersDetails = async (req, res) => {
 
 const getAllClasses = async (req, res) => {
     try {
-        const classes = await Classroom.find();
+        const { active, pageSize, pageNumber } = req.query;
+
+        let query = {};
+
+        if (active !== undefined) {
+            query.isActived = active === 'true';
+        }
+
+        const totalClasses = await Classroom.countDocuments(query);
+        const totalPages = Math.ceil(totalClasses / pageSize);
+        const classes = await Classroom.find(query)
+            .skip((pageNumber - 1) * pageSize)
+            .limit(Number(pageSize));
+
         if (await checkIsAdmin(req.user._id)) {
             res.status(200).json({
                 success: true,
-                data: classes,
+                data: {
+                    totalPages,
+                    currentPage: Number(pageNumber),
+                    classes
+
+                },
             });
         } else {
             return res.status(400).json({
