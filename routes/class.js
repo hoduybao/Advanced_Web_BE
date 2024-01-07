@@ -4,9 +4,7 @@ const { verifyAccessToken } = require("../middlewares/verifyToken");
 
 router.get("/detail/:slugClass", [verifyAccessToken], ctrls.getAllInfo);
 router.post("/create", [verifyAccessToken], ctrls.createNewClass);
-router.get("/class-teaching", [verifyAccessToken], ctrls.getListClassRoleTeacher);
 router.get("/list-class", [verifyAccessToken], ctrls.getListClassOfUser);
-router.get("/class-joining", [verifyAccessToken], ctrls.getListClassRoleStudent);
 router.get("/list-user/:slugClass", [verifyAccessToken], ctrls.getListUserOfClass);
 router.post("/join/:invitationId", [verifyAccessToken], ctrls.joinClassByCode);
 router.post("/join-class/:slugClass", [verifyAccessToken], ctrls.joinClassByLink);

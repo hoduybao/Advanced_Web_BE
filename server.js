@@ -1,3 +1,5 @@
+const http = require('http');
+
 const express = require("express");
 require("dotenv").config();
 const dbConnect = require("./config/dbConnect");
@@ -6,30 +8,38 @@ const cors = require("cors");
 
 const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
-const passport=require("passport")
-const passportSetup=require("./middlewares/passport")
+const passport = require("passport")
+const passportSetup = require("./middlewares/passport")
 
-const initRoutes = require("./routes"); 
+const initRoutes = require("./routes");
+const socketIO = require('socket.io');
 
 
 const app = express();
 const port = process.env.PORT || 8888;
+const server = http.createServer(app);
+const io = socketIO(server);
+
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 app.use(
   cors({
     origin: [process.env.CLIENT_URL, process.env.CLIENT_URL_LOCALHOST],
     methods: ["POST", "PUT", "GET", "DELETE"],
-    credentials:true,
+    credentials: true,
   })
 );
 
 app.use(cookieParser());
 app.use(cookieSession(
-    {
-        name:'session',
-        keys: ['lama'],
-        maxAge: 24*60*60*100
-    }
+  {
+    name: 'session',
+    keys: ['lama'],
+    maxAge: 24 * 60 * 60 * 100
+  }
 ))
 app.use(passport.initialize());
 
@@ -44,5 +54,5 @@ dbConnect();
 initRoutes(app);
 
 app.listen(port, () => {
-  console.log("Server running " +port);
+  console.log("Server running " + port);
 }); 

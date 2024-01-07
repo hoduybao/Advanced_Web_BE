@@ -76,7 +76,22 @@ const PostGradeReviewFromStudent = async (req, res) => {
             }));
 
             // Insert notifications into the Notification collection
-            await Notification.insertMany(notifications);
+            const insertedNotifications = await Notification.insertMany(notifications);
+
+            // const io = req.io;
+            // // Gửi thông báo qua Socket.IO
+            // const notificationDetails = insertedNotifications.map(notification => ({
+            //     _id: notification._id,
+            //     objectId: notification.objectId,
+            //     objectName: notification.objectName,
+            //     message: notification.message,
+            //     url: notification.url,
+            //     createdAt: notification.createdAt,
+            // }));
+
+            // teacherIds.forEach(teacherId => {
+            //     io.to(teacherId).emit('newNotification', notificationDetails);
+            // });
         }
 
         res.status(200).json({
@@ -86,7 +101,7 @@ const PostGradeReviewFromStudent = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
@@ -180,7 +195,7 @@ const ViewGradeReviews = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
@@ -342,7 +357,7 @@ const ViewGradeReviewDetails = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
@@ -465,7 +480,7 @@ const MarkFinalDecision = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
@@ -547,7 +562,7 @@ const AddCommentToReview = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });

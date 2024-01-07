@@ -9,7 +9,7 @@ const getAllNotify = async (req, res) => {
 
         const notifications = await Notification.find({ receiverId: userId })
             .sort({ createdAt: -1 })
-            .populate('senderId', 'fullname')
+            .populate('senderId', ['fullname', 'avatar'])
             .populate('objectId')
 
         const unreadCount = notifications.filter(notification => !notification.isRead).length;
@@ -24,7 +24,7 @@ const getAllNotify = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
@@ -71,7 +71,7 @@ const markNotificationAsRead = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: 'Internal Server Error',
         });
