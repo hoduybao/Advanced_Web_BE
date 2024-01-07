@@ -19,6 +19,9 @@ const getAllUsers = async (req, res) => {
     try {
         const { pageSize, pageNumber } = req.query;
 
+        const totalUsers = await User.countDocuments({ email: { $ne: 'admin' } });
+        const totalPages = Math.ceil(totalUsers / pageSize);
+
         const users = await User.find({ email: { $ne: 'admin' } })
             .skip((pageNumber - 1) * pageSize)
             .limit(parseInt(pageSize));
@@ -32,13 +35,17 @@ const getAllUsers = async (req, res) => {
         if (await checkIsAdmin(req.user._id)) {
             res.status(200).json({
                 success: true,
-                pageNumber: pageNumber,
                 data: adjustedUsers,
+                data: {
+                    totalPages,
+                    currentPage: Number(pageNumber),
+                    Userdata: adjustedUsers
+
+                },
             });
         } else {
             return res.status(400).json({
                 success: false,
-
                 message: 'Access denied. You do not have permission to perform this action.',
             });
         }
@@ -51,6 +58,7 @@ const getAllUsers = async (req, res) => {
         });
     }
 };
+
 
 
 
@@ -177,7 +185,6 @@ const getAllClasses = async (req, res) => {
                     totalPages,
                     currentPage: Number(pageNumber),
                     classes
-
                 },
             });
         } else {
