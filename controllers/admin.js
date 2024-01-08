@@ -304,12 +304,15 @@ const uploadCsvFileToMapStudentID = async (req, res) => {
         const csvContent = req.file.buffer.toString();
         const csvRows = csvContent.split('\n');
 
-        // Start the loop from index 1 to skip the header
         for (let i = 1; i < csvRows.length; i++) {
             const row = csvRows[i].replace(/\r/g, '');
             const [email, studentId] = row.split(',');
-            if (email && studentId) {
-                usersData.push({ email, studentId });
+
+            // Set studentId to "" if it is not present in the CSV row
+            const sanitizedStudentId = studentId || "";
+
+            if (email) {
+                usersData.push({ email, studentId: sanitizedStudentId });
             }
         }
 
@@ -330,21 +333,12 @@ const uploadCsvFileToMapStudentID = async (req, res) => {
             })
         );
 
-        const newdata = await User.find({ email: { $ne: 'admin' } })
-            .skip((1 - 1) * 10)
-            .limit(10);
-
-        const totalUsers = await User.countDocuments({ email: { $ne: 'admin' } });
-
+        const newdata = await User.find({ email: { $ne: 'admin' } });
 
         res.status(200).json({
             success: true,
             message: 'StudentId updated successfully',
-            data: {
-                totalUsers,
-                currentPage: 1,
-                Userdata: newdata
-            },
+            data: newdata
         });
     } catch (error) {
         console.error(error);
@@ -354,6 +348,7 @@ const uploadCsvFileToMapStudentID = async (req, res) => {
         });
     }
 }
+
 
 
 module.exports = {
