@@ -330,12 +330,21 @@ const uploadCsvFileToMapStudentID = async (req, res) => {
             })
         );
 
-        const newdata = await User.find({ email: { $ne: 'admin' } });
+        const newdata = await User.find({ email: { $ne: 'admin' } })
+            .skip((1 - 1) * 10)
+            .limit(10);
+
+        const totalUsers = await User.countDocuments({ email: { $ne: 'admin' } });
+
 
         res.status(200).json({
             success: true,
             message: 'StudentId updated successfully',
-            data: newdata
+            data: {
+                totalUsers,
+                currentPage: 1,
+                Userdata: newdata
+            },
         });
     } catch (error) {
         console.error(error);
