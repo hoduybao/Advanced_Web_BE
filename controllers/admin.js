@@ -301,16 +301,17 @@ const uploadCsvFileToMapStudentID = async (req, res) => {
         }
 
         const usersData = [];
-        req.file.buffer
-            .toString()
-            .replace(/\r/g, '')
-            .split('\n')
-            .forEach(row => {
-                const [email, studentId] = row.split(',');
-                if (email && studentId) {
-                    usersData.push({ email, studentId });
-                }
-            });
+        const csvContent = req.file.buffer.toString();
+        const csvRows = csvContent.split('\n');
+
+        // Start the loop from index 1 to skip the header
+        for (let i = 1; i < csvRows.length; i++) {
+            const row = csvRows[i].replace(/\r/g, '');
+            const [email, studentId] = row.split(',');
+            if (email && studentId) {
+                usersData.push({ email, studentId });
+            }
+        }
 
         // Update or save STUDENTID to the database using User model
         const updatedUsers = await Promise.all(
@@ -344,6 +345,7 @@ const uploadCsvFileToMapStudentID = async (req, res) => {
         });
     }
 }
+
 
 module.exports = {
     getAllUsers,
