@@ -34,7 +34,6 @@ const getAllUsers = async (req, res) => {
         if (await checkIsAdmin(req.user._id)) {
             res.status(200).json({
                 success: true,
-                data: adjustedUsers,
                 data: {
                     totalUsers,
                     currentPage: Number(pageNumber),
@@ -333,12 +332,22 @@ const uploadCsvFileToMapStudentID = async (req, res) => {
             })
         );
 
-        const newdata = await User.find({ email: { $ne: 'admin' } });
+        const totalUsers = await User.countDocuments({ email: { $ne: 'admin' } });
+
+        const newdata = await User.find({ email: { $ne: 'admin' } })
+            .skip((1 - 1) * 10)
+            .limit(parseInt(10));
+
 
         res.status(200).json({
             success: true,
             message: 'StudentId updated successfully',
-            data: newdata
+            data: {
+                totalUsers,
+                currentPage: 1,
+                Userdata: newdata
+
+            },
         });
     } catch (error) {
         console.error(error);
