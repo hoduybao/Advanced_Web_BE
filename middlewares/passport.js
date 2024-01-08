@@ -33,7 +33,8 @@ function initializePassport(passport) {
           return done(null, false, { message: 'Incorrect email.' });
         }
 
-        if (!user.isCorrectPassword(password)) {
+
+        if (! await user.isCorrectPassword(password)) {
           return done(null, false, { message: 'Incorrect password.' });
         }
 

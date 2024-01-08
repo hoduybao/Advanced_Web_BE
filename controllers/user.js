@@ -345,6 +345,60 @@ const updateUser = asyncHandler(async (req, res) => {
   });
 });
 
+const loginAdmin = asyncHandler(async (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+
+    if (user.email != 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect username or password!"
+      });
+    }
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: info.message || 'Authentication failed',
+      });
+    }
+
+    req.login(user, async (err) => {
+      if (err) {
+        return next(err);
+      }
+
+      const { password, refreshToken, ...userData } = user.toObject();
+      const accessToken = generateAccessToken(user._id);
+      const newRefreshToken = generateRefreshToken(user._id);
+
+      // Lưu refresh token vào db
+      try {
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
+          { refreshToken: newRefreshToken },
+          { new: true }
+        );
+
+        // Lưu refresh token vào cookie
+        res.cookie('refreshToken', newRefreshToken, {
+          httpOnly: true,
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.status(200).json({
+          success: true,
+          accessToken,
+          userData,
+        });
+      } catch (err) {
+        return next(err);
+      }
+    });
+  })(req, res, next);
+});
+
 module.exports = {
   register,
   login,
@@ -354,4 +408,5 @@ module.exports = {
   resetPassword,
   forgetPassword,
   loginGoogle,
+  loginAdmin
 };

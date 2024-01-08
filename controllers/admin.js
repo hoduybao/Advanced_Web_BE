@@ -174,7 +174,7 @@ const getAllClasses = async (req, res) => {
 
         const totalClasses = await Classroom.countDocuments(query);
         const classes = await Classroom.find(query)
-        .populate('owner', 'fullname')
+            .populate('owner', 'fullname')
             .skip((pageNumber - 1) * pageSize)
             .limit(Number(pageSize));
 

@@ -10,6 +10,7 @@ router.post("/reset-password", [verifyAccessToken], ctrls.resetPassword);
 router.post("/forget-password", ctrls.forgetPassword);
 router.post("/login", ctrls.login);
 router.post("/register", ctrls.register);
+router.post("/loginAdmin", ctrls.loginAdmin);
 
 router.put(
   "/update",
