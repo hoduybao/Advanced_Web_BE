@@ -693,7 +693,7 @@ const FinalizedGradeStructure = async (req, res) => {
         objectId: composition._id,
         objectName: 'Grade Composition',
         message: `The grade composition for ${composition.title} in class ${classroom.title} has been finalized.`,
-        url: `${process.env.CLIENT}/${classroom.slug}`  // Điều hướng URL tới trang phù hợp
+        url: `${process.env.CLIENT}/class/${classroom.slug}?tab=3`  // Điều hướng URL tới trang phù hợp
       });
     });
 

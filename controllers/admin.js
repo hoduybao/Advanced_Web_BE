@@ -229,7 +229,7 @@ const getDetailClass = async (req, res) => {
 const toggleClassStatus = async (req, res) => {
     try {
         const { classId } = req.params;
-        const classes = await Classroom.findById(classId);
+        const classes = await Classroom.findById(classId).populate('owner', 'fullname');
         if (await checkIsAdmin(req.user._id)) {
             if (!classes) {
                 return res.status(404).json({
