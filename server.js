@@ -1,33 +1,26 @@
-const http = require('http');
-
 const express = require("express");
 require("dotenv").config();
 const dbConnect = require("./config/dbConnect");
-
 const cors = require("cors");
-
 const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 const passport = require("passport")
 const passportSetup = require("./middlewares/passport")
-
 const initRoutes = require("./routes");
-const socketIO = require('socket.io');
-
+const { Server } = require('socket.io')
 
 const app = express();
-const port = process.env.PORT || 8888;
-const server = http.createServer(app);
-const io = socketIO(server);
-
-app.use((req, res, next) => {
-  req.io = io;
-  next();
+const httpServer = require("http").Server(app); // Create an HTTP server
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000",
+  },
 });
+const port = process.env.PORT || 8888;
 
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL, process.env.CLIENT_URL_LOCALHOST,"http://127.0.0.1:5173"],
+    origin: [process.env.CLIENT_URL, process.env.CLIENT_URL_LOCALHOST, "http://127.0.0.1:5173"],
     methods: ["POST", "PUT", "GET", "DELETE"],
     credentials: true,
   })
@@ -42,17 +35,24 @@ app.use(cookieSession(
   }
 ))
 app.use(passport.initialize());
-
 app.use(passport.session());
 
-//doc data kieu json
 app.use(express.json());
-//doc data kieu array , object,...
 app.use(express.urlencoded({ extended: true }));
 dbConnect();
 
 initRoutes(app);
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log("Server running " + port);
-}); 
+});
+
+io.on("connection", (socket) => {
+  console.log("a user connected");
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+  });
+});
+
+// Expose the Socket.IO instance to the routes
+app.set("io", io);

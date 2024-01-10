@@ -78,20 +78,11 @@ const PostGradeReviewFromStudent = async (req, res) => {
             // Insert notifications into the Notification collection
             const insertedNotifications = await Notification.insertMany(notifications);
 
-            // const io = req.io;
-            // // Gửi thông báo qua Socket.IO
-            // const notificationDetails = insertedNotifications.map(notification => ({
-            //     _id: notification._id,
-            //     objectId: notification.objectId,
-            //     objectName: notification.objectName,
-            //     message: notification.message,
-            //     url: notification.url,
-            //     createdAt: notification.createdAt,
-            // }));
-
-            // teacherIds.forEach(teacherId => {
-            //     io.to(teacherId).emit('newNotification', notificationDetails);
-            // });
+            const io = req.app.get("io");
+            io.emit("newNotify", {
+                success: true,
+                message: `New Notify`,
+            });
         }
 
         res.status(200).json({
@@ -472,6 +463,11 @@ const MarkFinalDecision = async (req, res) => {
             await notification.save();
         }
 
+        const io = req.app.get("io");
+        io.emit("newNotify", {
+            success: true,
+            message: `New Notify`,
+        });
 
         res.status(200).json({
             success: true,
@@ -538,6 +534,12 @@ const AddCommentToReview = async (req, res) => {
             });
 
             await notification.save();
+
+            const io = req.app.get("io");
+            io.emit("newNotify", {
+                success: true,
+                message: `New Notify`,
+            });
         } else {
             // Gửi thông báo đến toàn bộ giáo viên trong lớp
             const teacherNotifications = cls.teacherList.map(teacherId => {
@@ -552,6 +554,12 @@ const AddCommentToReview = async (req, res) => {
             });
 
             await Notification.insertMany(teacherNotifications);
+
+            const io = req.app.get("io");
+            io.emit("newNotify", {
+                success: true,
+                message: `New Notify`,
+            });
         }
 
 

@@ -700,6 +700,12 @@ const FinalizedGradeStructure = async (req, res) => {
     // Save all notifications
     await Notification.insertMany(notifications);
 
+    const io = req.app.get("io");
+    io.emit("newNotify", {
+      success: true,
+      message: `New Notify`,
+    });
+
     res.status(200).json({
       success: true,
       message: 'Grade composition marked as finalized'
