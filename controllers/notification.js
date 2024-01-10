@@ -88,7 +88,7 @@ const markAllNotificationsAsRead = async (req, res) => {
         // Lấy lại danh sách thông báo sau khi cập nhật
         const notifications = await Notification.find({ receiverId: userId })
             .sort({ createdAt: -1 })
-            .populate('senderId', 'fullname')
+            .populate('senderId', ['fullname', 'avatar'])
             .populate('objectId');
 
         const unreadCount = 0; // Đã đọc hết nên đặt số lượng chưa đọc là 0

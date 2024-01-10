@@ -457,7 +457,7 @@ const MarkFinalDecision = async (req, res) => {
                 objectId: review._id,
                 objectName: 'Grade Review',
                 message: `Your grade review for ${dataGradeStructure.title} in class ${cls.title} has been finalized. Check the updated grade.`,
-                url: `${process.env.CLIENT}/class/${cls.slug}?tab=3`,  // Adjust the URL as needed
+                url: `/class/${cls.slug}?tab=3`,  // Adjust the URL as needed
             });
 
             await notification.save();
@@ -530,7 +530,7 @@ const AddCommentToReview = async (req, res) => {
                 objectId: reviewId,
                 objectName: 'Grade Review',
                 message: `The teacher has commented on your grade review for ${dataGradeStructure.title} in class ${cls.title}`,
-                url: `${process.env.CLIENT}/class/${cls.slug}`,
+                url: `/class/${cls.slug}?tab=3`,
             });
 
             await notification.save();
@@ -549,7 +549,7 @@ const AddCommentToReview = async (req, res) => {
                     objectId: reviewId,
                     objectName: 'Grade Review',
                     message: `Student ${review.gradeDetail.studentId.fullname} has commented in grade review for ${dataGradeStructure.title} in class ${cls.title}`,
-                    url: `${process.env.CLIENT}/class/${cls.slug}?tab=4`,
+                    url: `/class/${cls.slug}?tab=4`,
                 });
             });
 
