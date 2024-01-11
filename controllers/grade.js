@@ -299,8 +299,10 @@ const UploadGradeAGradeStructure = async (req, res) => {
             .split('\n')
             .forEach(row => {
                 const [studentId, point] = row.split(',');
-                if (studentId && point) {
-                    gradesData.push({ studentId, point: parseFloat(point) });
+                const cleanedStudentId = studentId.trim();
+
+                if (cleanedStudentId && point) {
+                    gradesData.push({ studentId: cleanedStudentId, point: parseFloat(point) });
                 }
             });
 
