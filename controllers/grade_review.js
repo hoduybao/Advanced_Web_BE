@@ -373,6 +373,8 @@ const MarkFinalDecision = async (req, res) => {
         // Update the final decision and new grade point
         review.isFinalDecision = true;
 
+        review.oldPoint = newPoint;
+
         // Save the updated review
         await review.save();
 

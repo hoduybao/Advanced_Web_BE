@@ -564,6 +564,7 @@ const getListClassOfUser = async (req, res) => {
           name: userClassroom.classID.owner.fullname,
           avatar: userClassroom.classID.owner.avatar,
         },
+        isActived: userClassroom.classID.isActived
       };
     });
 

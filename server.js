@@ -13,14 +13,14 @@ const app = express();
 const httpServer = require("http").Server(app); // Create an HTTP server
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: [process.env.CLIENT_URL_LOCALHOST],
   },
 });
 const port = process.env.PORT || 8888;
 
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL, process.env.CLIENT_URL_LOCALHOST, "http://127.0.0.1:5173"],
+    origin: [process.env.CLIENT_URL, process.env.CLIENT_URL_LOCALHOST, process.env.CLIENT_ADMIN],
     methods: ["POST", "PUT", "GET", "DELETE"],
     credentials: true,
   })
