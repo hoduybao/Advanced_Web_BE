@@ -201,6 +201,13 @@ const login = asyncHandler(async (req, res, next) => {
       return next(err);
     }
 
+    if (user.isLocked) {
+      return res.status(400).json({
+        success: false,
+        message: "Account is locked, please contact to admin!"
+      });
+    }
+
     if (!user) {
       return res.status(400).json({
         success: false,
