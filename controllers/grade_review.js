@@ -72,7 +72,7 @@ const PostGradeReviewFromStudent = async (req, res) => {
                 objectId: newGradeReview._id,
                 objectName: 'Grade Review',
                 message: `Student ${student.fullname} has submitted a grade review in score colunm ${gradeStructureDetail.title}`,
-                url: `${process.env.CLIENT}/${cls.slug}`,  // Adjust the URL as needed
+                url: `/class/${cls.slug}?tab=4`,  // Adjust the URL as needed
             }));
 
             // Insert notifications into the Notification collection
