@@ -13,7 +13,7 @@ const app = express();
 const httpServer = require("http").Server(app); // Create an HTTP server
 const io = new Server(httpServer, {
   cors: {
-    origin: [process.env.CLIENT_URL_LOCALHOST],
+    origin: [process.env.CLIENT_URL],
   },
 });
 const port = process.env.PORT || 8888;
