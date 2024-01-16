@@ -208,6 +208,13 @@ const login = asyncHandler(async (req, res, next) => {
       });
     }
 
+    if (!user.verified) {
+      return res.status(400).json({
+        success: false,
+        message: "Account is not verified, please verify email!"
+      });
+    }
+
     if (!user) {
       return res.status(400).json({
         success: false,
